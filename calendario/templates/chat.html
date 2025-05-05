@@ -1,0 +1,61 @@
+{% extends "layout.html" %}
+
+{% block title %}Chat - Grupo {{ current_user.family.name }}{% endblock %}
+
+{% block content %}
+<div class="chat-container">
+    <h2>Chat - {{ current_user.family.name }}</h2>
+    
+    <div class="messages-container">
+        {% if messages %}
+            <ul class="message-list">
+                {% for message in messages %}
+                    <li class="message-item {% if message.user_id == current_user.id %}own-message{% else %}other-message{% endif %}">
+                        <div class="message-avatar">
+                            <img src="{{ url_for('static', filename='avatars/' + message.author.avatar) }}" alt="{{ message.author.username }}" class="avatar-small">
+                        </div>
+                        <div class="message-content">
+                            <div class="message-header">
+                                <span class="message-author">{{ message.author.username }}</span>
+                                <span class="message-time">{{ message.timestamp.strftime('%d/%m/%Y %H:%M') }}</span>
+                            </div>
+                            <div class="message-text">
+                                {{ message.content }}
+                            </div>
+                        </div>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p class="no-messages">Nenhuma mensagem ainda. Seja o primeiro a enviar!</p>
+        {% endif %}
+    </div>
+    
+    <div class="message-form">
+        <form method="POST" action="{{ url_for('send_message') }}">
+            {{ form.hidden_tag() }}
+            <div class="form-group message-input">
+                {{ form.content(class="form-control", placeholder="Digite sua mensagem...") }}
+            </div>
+            <div class="form-group message-submit">
+                {{ form.submit(class="btn btn-primary") }}
+            </div>
+        </form>
+    </div>
+
+    <div class="chat-members">
+        <h3>Membros Online</h3>
+        <ul class="member-list">
+            {% for member in current_user.family.members %}
+                <li class="member-item">
+                    <img src="{{ url_for('static', filename='avatars/' + member.avatar) }}" alt="{{ member.username }}" class="avatar-small">
+                    <span>{{ member.username }}</span>
+                    {% if member.id == current_user.family.admin_id %}
+                        <span class="admin-badge">Admin</span>
+                    {% endif %}
+                </li>
+            {% endfor %}
+        </ul>
+    </div>
+</div>
+{% endblock %} 

@@ -1,0 +1,58 @@
+{% extends "layout.html" %}
+
+{% block title %}Perfil - Calendário Familiar{% endblock %}
+
+{% block content %}
+<div class="profile-container">
+    <div class="profile-header">
+        <div class="profile-avatar">
+            <img src="{{ url_for('static', filename='avatars/' + current_user.avatar) }}" alt="{{ current_user.username }}" class="avatar-large">
+        </div>
+        <div class="profile-info">
+            <h2>{{ current_user.username }}</h2>
+            <p>{{ current_user.email }}</p>
+            {% if current_user.family %}
+                <p>Grupo Familiar: {{ current_user.family.name }}</p>
+                {% if current_user.id == current_user.family.admin_id %}
+                    <span class="admin-badge">Administrador</span>
+                {% endif %}
+            {% else %}
+                <p>Sem grupo familiar</p>
+                <a href="{{ url_for('create_family') }}" class="btn btn-primary">Criar Grupo Familiar</a>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="profile-form">
+        <h3>Atualizar Perfil</h3>
+        <form method="POST" enctype="multipart/form-data">
+            {{ form.hidden_tag() }}
+            <div class="form-group">
+                {{ form.username.label }}
+                {{ form.username(class="form-control") }}
+                {% if form.username.errors %}
+                    <div class="error">
+                        {% for error in form.username.errors %}
+                            <span>{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+            <div class="form-group">
+                {{ form.avatar.label }}
+                {{ form.avatar(class="form-control") }}
+                {% if form.avatar.errors %}
+                    <div class="error">
+                        {% for error in form.avatar.errors %}
+                            <span>{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+            <div class="form-group">
+                {{ form.submit(class="btn btn-primary") }}
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %} 

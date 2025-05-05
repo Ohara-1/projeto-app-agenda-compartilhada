@@ -1,0 +1,16 @@
+{% extends "layout.html" %}
+
+{% block title %}Entrar em Grupo Familiar{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 500px; margin: 2em auto;">
+    <h2>Entrar em Grupo Familiar</h2>
+    <form method="post">
+        <div class="form-group">
+            <label for="invite_link">Cole aqui o link de convite do grupo:</label>
+            <input type="text" class="form-control" id="invite_link" name="invite_link" placeholder="Cole o link aqui" required>
+        </div>
+        <button type="submit" class="btn btn-primary" style="margin-top: 1em;">Entrar no Grupo</button>
+    </form>
+</div>
+{% endblock %} 

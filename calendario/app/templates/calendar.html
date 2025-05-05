@@ -1,0 +1,87 @@
+{% extends "layout.html" %}
+
+{% block title %}Calendário - Grupo {{ current_user.family.name }}{% endblock %}
+
+{% block content %}
+{% if no_family %}
+  <div class="alert alert-warning" style="margin: 2em auto; max-width: 600px; text-align: center;">
+    Você ainda não faz parte de um grupo familiar.<br>
+    <a href="{{ url_for('main.create_family') }}" class="btn btn-primary" style="margin: 1em 0.5em;">Criar grupo</a>
+    <a href="{{ url_for('main.join_family_page') }}" class="btn btn-secondary" style="margin: 1em 0.5em;">Entrar em um grupo</a>
+  </div>
+{% else %}
+<div class="calendar-container">
+    <div class="calendar-header">
+        <h2>Calendário - {{ current_user.family.name }}</h2>
+        {% if current_user in current_user.family.admins %}
+            <a href="{{ url_for('main.new_event') }}" class="btn btn-primary">Novo Evento</a>
+        {% endif %}
+    </div>
+
+    <div class="calendar">
+        <div class="calendar-days">
+            <div class="day-header">Dom</div>
+            <div class="day-header">Seg</div>
+            <div class="day-header">Ter</div>
+            <div class="day-header">Qua</div>
+            <div class="day-header">Qui</div>
+            <div class="day-header">Sex</div>
+            <div class="day-header">Sáb</div>
+            
+            {% for day in range(1, days_in_month + first_day_of_month + 1) %}
+                {% if loop.index <= first_day_of_month %}
+                    <div class="day empty"></div>
+                {% else %}
+                    <div class="day">
+                        <div class="day-number">{{ day - first_day_of_month }}</div>
+                        <div class="day-events">
+                            {% for event in events %}
+                                {% if event.start_time.day == day - first_day_of_month and event.start_time.month == current_month and event.start_time.year == current_year %}
+                                    <a href="{{ url_for('main.edit_event', event_id=event.id) }}" class="event" title="{{ event.title }}">
+                                        <div class="event-title">{{ event.title }}</div>
+                                        <div class="event-time">{{ event.start_time.strftime('%H:%M') }}</div>
+                                    </a>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% endif %}
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="upcoming-events">
+        <h3>Próximos eventos</h3>
+        {% if upcoming_events %}
+            <ul class="event-list">
+                {% for event in upcoming_events %}
+                    <li class="event-item">
+                        <div class="event-date">
+                            {{ event.start_time.strftime('%d/%m/%Y %H:%M') }}
+                        </div>
+                        <div class="event-info">
+                            <h4>{{ event.title }}</h4>
+                            <p>{{ event.description }}</p>
+                            <div class="event-creator">
+                                <div class="avatar-circle avatar-small">
+                                    {{ event.creator.username|first|upper }}
+                                </div>
+                                <span>{{ event.creator.username }}</span>
+                            </div>
+                            <div class="event-actions">
+                                {% if event.creator.id == current_user.id or current_user in current_user.family.admins %}
+                                    <a href="{{ url_for('main.edit_event', event_id=event.id) }}" class="btn btn-sm">Editar</a>
+                                    <a href="{{ url_for('main.delete_event', event_id=event.id) }}" class="btn btn-sm btn-danger" onclick="return confirm('Tem certeza que deseja excluir este evento?')">Excluir</a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p class="no-events">Nenhum evento próximo.</p>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+{% endblock %} 
