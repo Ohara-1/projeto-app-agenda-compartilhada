@@ -55,10 +55,6 @@ class EventForm(FlaskForm):
         if end_time.data < self.start_time.data:
             raise ValidationError('O horário de término deve ser posterior ao horário de início.')
 
-class MessageForm(FlaskForm):
-    content = TextAreaField('Mensagem', validators=[DataRequired()])
-    submit = SubmitField('Enviar')
-
 class TaskForm(FlaskForm):
     title = StringField('Título', validators=[DataRequired(), Length(min=2, max=120)])
     description = TextAreaField('Descrição', validators=[Optional()])

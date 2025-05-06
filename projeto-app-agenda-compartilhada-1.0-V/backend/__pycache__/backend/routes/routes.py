@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify, send_from_directory
+from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify, send_from_directory, current_app
 from flask_login import login_user, current_user, logout_user, login_required
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
@@ -6,8 +6,8 @@ from datetime import datetime, date, timedelta
 import calendar as cal_module
 import os
 from backend import db
-from backend.models.models import User, Family, Event, Message, Task
-from backend.forms.forms import LoginForm, RegistrationForm, FamilyForm, EventForm, MessageForm, ProfileForm, TaskForm
+from backend.models.models import User, Family, Event, Task
+from backend.forms.forms import LoginForm, RegistrationForm, FamilyForm, EventForm, ProfileForm, TaskForm
 
 main = Blueprint('main', __name__)
 
@@ -288,37 +288,6 @@ def delete_event(event_id):
     db.session.commit()
     flash('Evento excluído com sucesso!')
     return redirect(url_for('main.calendar'))
-
-@main.route('/chat')
-@login_required
-def chat():
-    if not current_user.family:
-        flash('Você precisa pertencer a um grupo familiar para acessar o chat.')
-        return redirect(url_for('main.calendar'))
-    
-    messages = Message.query.filter_by(family_id=current_user.family_id).order_by(Message.timestamp.asc()).all()
-    form = MessageForm()
-    
-    return render_template('chat/chat.html', messages=messages, form=form)
-
-@main.route('/send_message', methods=['POST'])
-@login_required
-def send_message():
-    if not current_user.family:
-        flash('Você precisa pertencer a um grupo familiar para enviar mensagens.')
-        return redirect(url_for('main.calendar'))
-    
-    form = MessageForm()
-    if form.validate_on_submit():
-        message = Message(
-            content=form.text.data,
-            user_id=current_user.id,
-            family_id=current_user.family_id
-        )
-        db.session.add(message)
-        db.session.commit()
-        
-    return redirect(url_for('main.chat'))
 
 @main.route('/family/members')
 @login_required
@@ -634,11 +603,6 @@ def dashboard():
         completed=False
     ).filter(Task.assigned_to_id != current_user.id).order_by(Task.due_date).all()
     
-    # Mensagens recentes
-    recent_messages = Message.query.filter_by(
-        family_id=current_user.family_id
-    ).order_by(Message.timestamp.desc()).limit(5).all()
-    
     # Membros da família
     family_members = User.query.filter_by(family_id=current_user.family_id).all()
     
@@ -648,7 +612,6 @@ def dashboard():
                           upcoming_events=upcoming_events,
                           my_tasks=my_tasks,
                           family_tasks=family_tasks,
-                          recent_messages=recent_messages,
                           family_members=family_members)
 
 @main.route('/imagens/<filename>')

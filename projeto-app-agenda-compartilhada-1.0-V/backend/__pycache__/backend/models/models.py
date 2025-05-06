@@ -15,7 +15,6 @@ class User(db.Model, UserMixin):
     password = db.Column(db.String(150), nullable=False)
     family_id = db.Column(db.Integer, db.ForeignKey('family.id'))
     events = db.relationship('Event', backref='creator', lazy=True)
-    messages = db.relationship('Message', backref='author', lazy=True)
 
 family_admins = db.Table('family_admins',
     db.Column('family_id', db.Integer, db.ForeignKey('family.id')),
@@ -29,7 +28,6 @@ class Family(db.Model):
     admin_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     members = db.relationship('User', backref='family', lazy=True, foreign_keys=[User.family_id])
     events = db.relationship('Event', backref='family', lazy=True)
-    messages = db.relationship('Message', backref='family', lazy=True)
     admins = db.relationship('User', secondary=family_admins, backref='admin_families')
     
     def get_join_token(self, expires_sec=86400):
@@ -53,13 +51,6 @@ class Event(db.Model):
     start_time = db.Column(db.DateTime, nullable=False)
     end_time = db.Column(db.DateTime, nullable=False)
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    family_id = db.Column(db.Integer, db.ForeignKey('family.id'), nullable=False)
-
-class Message(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    content = db.Column(db.Text, nullable=False)
-    timestamp = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     family_id = db.Column(db.Integer, db.ForeignKey('family.id'), nullable=False)
 
