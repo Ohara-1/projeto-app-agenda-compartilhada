@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Agenda Familiar{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/app_styles.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    {% block styles %}{% endblock %}
+</head>
+<body>
+    <div class="app-container">
+        <!-- Barra lateral -->
+        <div class="sidebar">
+            <!-- Elementos decorativos -->
+            <div class="circle-decoration circle-1"></div>
+            <div class="circle-decoration circle-2"></div>
+            <div class="circle-decoration circle-3"></div>
+            <div class="dot-pattern"></div>
+            
+            <!-- Selector de calendário -->
+            <div class="header-logo">
+                <img src="{{ url_for('static', filename='images/calendario.png') }}" alt="Calendário" class="logo-image">
+                <div class="logo-text">AGENDA FAMILIAR</div>
+            </div>
+            
+            <div class="calendar-selector">
+                <img src="{{ url_for('static', filename='images/calendario.png') }}" alt="Calendário" width="24" height="24">
+                {% if current_user.family %}
+                    <span>{{ current_user.family.name }}</span>
+                {% else %}
+                    <span>Nenhum calendário</span>
+                {% endif %}
+            </div>
+            
+            <!-- Botão de criar novo calendário -->
+            <a href="{{ url_for('main.create_family') }}" class="new-calendar-btn">
+                <i class="fas fa-plus-circle"></i> Criar novo calendário
+            </a>
+            
+            <!-- Menu de navegação -->
+            {% if current_user.family %}
+                <nav class="nav-menu">
+                    <a href="{{ url_for('main.dashboard') }}" class="nav-item {% if request.endpoint == 'main.dashboard' %}active{% endif %}">
+                        <i class="fas fa-th-large"></i> Dashboard
+                    </a>
+                    <a href="{{ url_for('main.calendar') }}" class="nav-item {% if request.endpoint == 'main.calendar' %}active{% endif %}">
+                        <i class="far fa-calendar-alt"></i> Calendário
+                    </a>
+                    <a href="{{ url_for('main.new_event') }}" class="nav-item {% if request.endpoint == 'main.new_event' %}active{% endif %}">
+                        <i class="fas fa-calendar-plus"></i> Criar evento
+                    </a>
+                    <a href="{{ url_for('main.tasks', new='true') }}" class="nav-item {% if request.endpoint == 'main.tasks' %}active{% endif %}">
+                        <i class="fas fa-tasks"></i> Criar tarefa
+                    </a>
+                    <a href="{{ url_for('main.family_members') }}" class="nav-item {% if request.endpoint == 'main.family_members' %}active{% endif %}">
+                        <i class="fas fa-users"></i> Participantes
+                    </a>
+                    {% if current_user in current_user.family.admins %}
+                        <a href="{{ url_for('main.settings') }}" class="nav-item {% if request.endpoint == 'main.settings' %}active{% endif %}">
+                            <i class="fas fa-cog"></i> Configurações
+                        </a>
+                    {% endif %}
+                </nav>
+            {% endif %}
+            
+            <!-- Perfil de usuário -->
+            <div class="user-profile">
+                <div class="avatar">
+                    {{ current_user.username|first|upper }}
+                </div>
+                <span>{{ current_user.username }}</span>
+                <a href="{{ url_for('main.logout') }}" style="margin-left: auto;">
+                    <i class="fas fa-sign-out-alt"></i>
+                </a>
+            </div>
+        </div>
+        
+        <!-- Conteúdo principal -->
+        <div class="main-content">
+            {% with messages = get_flashed_messages() %}
+                {% if messages %}
+                    <div class="messages">
+                        {% for message in messages %}
+                            <div class="message alert-message"><i class="fas fa-info-circle"></i> {{ message }}<button class="close-btn"><i class="fas fa-times"></i></button></div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            {% endwith %}
+            
+            {% block content %}{% endblock %}
+        </div>
+    </div>
+
+    <script>
+        // Adicionar classe de animação durante a navegação
+        document.querySelectorAll('.nav-item').forEach(item => {
+            item.addEventListener('click', function() {
+                this.classList.add('active');
+            });
+        });
+
+        // Fechar mensagens de alerta
+        document.addEventListener('DOMContentLoaded', function() {
+            const messages = document.querySelectorAll('.alert-message');
+            
+            // Adicionar evento de clique no botão fechar
+            messages.forEach(message => {
+                // Determinar o tipo de mensagem com base em palavras-chave
+                const messageText = message.textContent.toLowerCase();
+                if (messageText.includes('sucesso')) {
+                    message.classList.add('message-success');
+                    message.querySelector('i').className = 'fas fa-check-circle';
+                } else if (messageText.includes('erro') || messageText.includes('falhou')) {
+                    message.classList.add('message-error');
+                    message.querySelector('i').className = 'fas fa-exclamation-circle';
+                } else if (messageText.includes('aviso')) {
+                    message.classList.add('message-warning');
+                    message.querySelector('i').className = 'fas fa-exclamation-triangle';
+                }
+                
+                const closeBtn = message.querySelector('.close-btn');
+                if (closeBtn) {
+                    closeBtn.addEventListener('click', function() {
+                        message.classList.add('message-hide');
+                        setTimeout(() => {
+                            message.remove();
+                        }, 300);
+                    });
+                }
+                
+                // Fechar automaticamente após 5 segundos
+                setTimeout(() => {
+                    message.classList.add('message-hide');
+                    setTimeout(() => {
+                        message.remove();
+                    }, 300);
+                }, 5000);
+            });
+        });
+    </script>
+</body>
+</html> 
