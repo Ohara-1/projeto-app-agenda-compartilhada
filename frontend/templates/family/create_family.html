@@ -1,0 +1,48 @@
+{% extends "layout/app_layout.html" %}
+
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/family.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="page-container">
+    <div class="header">
+        <div class="title-section">
+            <h1>Criar Grupo Familiar</h1>
+            <p class="subtitle">Organize eventos e mantenha toda a família conectada em um só lugar</p>
+        </div>
+    </div>
+
+    <div class="content">
+        <div class="info-box">
+            <i class="fas fa-info-circle"></i>
+            <p>Como criador, você será o administrador do grupo e poderá convidar outros membros da família para participar.</p>
+        </div>
+
+        <form method="POST" class="form">
+            {{ form.hidden_tag() }}
+            
+            <div class="form-group">
+                {{ form.name.label(class="form-label") }}
+                {{ form.name(class="form-input", placeholder="Ex: Família Silva") }}
+                {% if form.name.errors %}
+                    {% for error in form.name.errors %}
+                        <span class="error-message">{{ error }}</span>
+                    {% endfor %}
+                {% endif %}
+            </div>
+
+            <div class="button-group">
+                <button type="submit" class="primary-button">
+                    <i class="fas fa-users"></i>
+                    Criar Grupo
+                </button>
+                <a href="{{ url_for('main.calendar') }}" class="secondary-button">
+                    <i class="fas fa-times"></i>
+                    Cancelar
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %} 
