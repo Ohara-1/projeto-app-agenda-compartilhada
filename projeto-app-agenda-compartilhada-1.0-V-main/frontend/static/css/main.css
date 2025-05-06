@@ -1,0 +1,5 @@
+/* Arquivo CSS principal que importa os outros estilos modularizados */
+@import url('app_styles.css');
+@import url('auth.css');
+@import url('calendar.css');
+@import url('chat.css');

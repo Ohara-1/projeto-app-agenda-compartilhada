@@ -1,0 +1,85 @@
+{% extends "layout/app_layout.html" %}
+{% block title %}Dashboard - Agenda Familiar{% endblock %}
+
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <div class="dashboard-header">
+        <h1>Dashboard</h1>
+        <p class="welcome-text">Bem-vindo de volta, {{ current_user.username }}!</p>
+    </div>
+    
+    <div class="dashboard-grid">
+        <!-- Eventos do Dia -->
+        <div class="dashboard-card today-events">
+            <div class="card-header">
+                <h2>Eventos de Hoje</h2>
+                <span class="date">{{ today.strftime('%d/%m/%Y') }}</span>
+            </div>
+            {% if todays_events %}
+                <ul class="events-list">
+                    {% for event in todays_events %}
+                        <li class="event-item">
+                            <span class="event-time">{{ event.start_time.strftime('%H:%M') }}</span>
+                            <span class="event-title">{{ event.title }}</span>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p class="empty-state">Nenhum evento para hoje</p>
+            {% endif %}
+        </div>
+
+        <!-- Próximos Eventos -->
+        <div class="dashboard-card upcoming-events">
+            <div class="card-header">
+                <h2>Próximos Eventos</h2>
+            </div>
+            {% if upcoming_events %}
+                <ul class="events-list">
+                    {% for event in upcoming_events %}
+                        <li class="event-item">
+                            <div class="event-date">{{ event.start_time.strftime('%d/%m') }}</div>
+                            <div class="event-info">
+                                <span class="event-title">{{ event.title }}</span>
+                                <span class="event-time">{{ event.start_time.strftime('%H:%M') }}</span>
+                            </div>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p class="empty-state">Nenhum evento próximo</p>
+            {% endif %}
+        </div>
+
+        <!-- Minhas Tarefas -->
+        <div class="dashboard-card my-tasks">
+            <div class="card-header">
+                <h2>Minhas Tarefas</h2>
+            </div>
+            {% if my_tasks %}
+                <ul class="tasks-list">
+                    {% for task in my_tasks %}
+                        <li class="task-item">
+                            <div class="task-status">
+                                <input type="checkbox" {% if task.completed %}checked{% endif %}>
+                            </div>
+                            <div class="task-info">
+                                <span class="task-title">{{ task.title }}</span>
+                                {% if task.due_date %}
+                                    <span class="task-due">Vence em: {{ task.due_date.strftime('%d/%m') }}</span>
+                                {% endif %}
+                            </div>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p class="empty-state">Nenhuma tarefa pendente</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %} 
