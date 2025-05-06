@@ -9,7 +9,7 @@
 <div class="dashboard-container">
     <div class="dashboard-header">
         <h1>Dashboard</h1>
-        <p class="welcome-text">Bem-vindo de volta, {{ current_user.name }}!</p>
+        <p class="welcome-text">Bem-vindo de volta, {{ current_user.username }}!</p>
     </div>
     
     <div class="dashboard-grid">
@@ -78,26 +78,6 @@
                 </ul>
             {% else %}
                 <p class="empty-state">Nenhuma tarefa pendente</p>
-            {% endif %}
-        </div>
-
-        <!-- Mensagens Recentes -->
-        <div class="dashboard-card recent-messages">
-            <div class="card-header">
-                <h2>Mensagens Recentes</h2>
-            </div>
-            {% if recent_messages %}
-                <ul class="messages-list">
-                    {% for message in recent_messages %}
-                        <li class="message-item">
-                            <div class="message-author">{{ message.user.name }}</div>
-                            <div class="message-content">{{ message.content }}</div>
-                            <div class="message-time">{{ message.timestamp.strftime('%H:%M') }}</div>
-                        </li>
-                    {% endfor %}
-                </ul>
-            {% else %}
-                <p class="empty-state">Nenhuma mensagem recente</p>
             {% endif %}
         </div>
     </div>
