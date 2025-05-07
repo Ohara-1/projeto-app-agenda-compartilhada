@@ -666,4 +666,9 @@ def dashboard():
 
 @main.route('/imagens/<filename>')
 def imagens(filename):
-    return send_from_directory('../frontend/static/images', filename) 
+    return send_from_directory('../frontend/static/images', filename)
+
+@main.route('/family/options')
+@login_required
+def family_options():
+    return render_template('family/family_options.html') 

@@ -1,0 +1,153 @@
+{% extends "layout/app_layout.html" %}
+
+{% block title %}Opções de Grupo{% endblock %}
+
+{% block styles %}
+<style>
+    .options-container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 30px;
+    }
+    
+    .options-header {
+        text-align: center;
+        margin-bottom: 40px;
+    }
+    
+    .options-title {
+        font-size: 2rem;
+        color: #333;
+        margin-bottom: 15px;
+    }
+    
+    .options-description {
+        color: #666;
+        font-size: 1.1rem;
+    }
+    
+    .options-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 30px;
+        margin-top: 30px;
+    }
+    
+    .option-card {
+        background-color: white;
+        border-radius: 15px;
+        box-shadow: 0 5px 25px rgba(0, 0, 0, 0.05);
+        padding: 30px;
+        text-align: center;
+        transition: all 0.3s ease;
+    }
+    
+    .option-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+    }
+    
+    .option-icon {
+        font-size: 3rem;
+        color: #4361ee;
+        margin-bottom: 20px;
+    }
+    
+    .option-title {
+        font-size: 1.5rem;
+        color: #333;
+        margin-bottom: 15px;
+    }
+    
+    .option-description {
+        color: #666;
+        margin-bottom: 25px;
+        line-height: 1.6;
+    }
+    
+    .option-btn {
+        display: inline-block;
+        background-color: #4361ee;
+        color: white;
+        padding: 12px 25px;
+        border-radius: 8px;
+        text-decoration: none;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+    
+    .option-btn:hover {
+        background-color: #3652d9;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(67, 97, 238, 0.4);
+    }
+    
+    .join-form {
+        margin-top: 20px;
+    }
+    
+    .join-input {
+        width: 100%;
+        padding: 12px 15px;
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        font-size: 1rem;
+        margin-bottom: 15px;
+    }
+    
+    .join-input:focus {
+        border-color: #4361ee;
+        box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.15);
+        outline: none;
+    }
+    
+    @media (max-width: 768px) {
+        .options-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="options-container">
+    <div class="options-header">
+        <h1 class="options-title">Gerenciar Grupos</h1>
+        <p class="options-description">Escolha como você deseja interagir com grupos familiares</p>
+    </div>
+    
+    <div class="options-grid">
+        <!-- Opção de Criar Grupo -->
+        <div class="option-card">
+            <div class="option-icon">
+                <i class="fas fa-plus-circle"></i>
+            </div>
+            <h2 class="option-title">Criar Novo Grupo</h2>
+            <p class="option-description">
+                Crie um novo grupo familiar e convide seus familiares para compartilhar eventos e tarefas.
+            </p>
+            <a href="{{ url_for('main.create_family') }}" class="option-btn">
+                Criar Grupo
+            </a>
+        </div>
+        
+        <!-- Opção de Entrar em Grupo -->
+        <div class="option-card">
+            <div class="option-icon">
+                <i class="fas fa-sign-in-alt"></i>
+            </div>
+            <h2 class="option-title">Entrar em um Grupo</h2>
+            <p class="option-description">
+                Entre em um grupo familiar existente usando o link de convite que você recebeu.
+            </p>
+            <form method="POST" action="{{ url_for('main.join_family_page') }}" class="join-form">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="text" name="invite_link" class="join-input" placeholder="Cole o link de convite aqui" required>
+                <button type="submit" class="option-btn">
+                    Entrar no Grupo
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %} 
