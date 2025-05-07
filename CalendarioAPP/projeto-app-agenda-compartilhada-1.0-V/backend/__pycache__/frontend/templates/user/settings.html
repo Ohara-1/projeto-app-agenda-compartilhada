@@ -1,0 +1,276 @@
+{% extends "layout/app_layout.html" %}
+{% block title %}Configurações do Grupo{% endblock %}
+
+{% block styles %}
+<style>
+    .settings-container {
+        background-color: white;
+        border-radius: 15px;
+        box-shadow: 0 5px 25px rgba(0, 0, 0, 0.05);
+        padding: 30px;
+        margin-bottom: 25px;
+    }
+    
+    .settings-title {
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: #333;
+        margin-bottom: 25px;
+    }
+    
+    .settings-section {
+        margin-bottom: 30px;
+    }
+    
+    .section-title {
+        font-size: 1.3rem;
+        font-weight: 600;
+        color: #444;
+        margin-bottom: 15px;
+    }
+    
+    .section-description {
+        color: #666;
+        margin-bottom: 20px;
+        font-size: 0.95rem;
+    }
+    
+    .divider {
+        height: 1px;
+        background-color: #eee;
+        margin: 30px 0;
+    }
+    
+    .form-group {
+        margin-bottom: 20px;
+    }
+    
+    .form-label {
+        display: block;
+        font-weight: 500;
+        margin-bottom: 8px;
+        color: #444;
+    }
+    
+    .form-input {
+        width: 100%;
+        padding: 12px 15px;
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        font-size: 1rem;
+        color: #444;
+        font-family: 'Poppins', sans-serif;
+        transition: all 0.3s ease;
+    }
+    
+    .form-input:focus {
+        border-color: #4361ee;
+        box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.15);
+        outline: none;
+    }
+    
+    .form-switch {
+        display: flex;
+        align-items: center;
+        cursor: pointer;
+        user-select: none;
+    }
+    
+    .switch-checkbox {
+        position: absolute;
+        opacity: 0;
+        cursor: pointer;
+        height: 0;
+        width: 0;
+    }
+    
+    .switch-toggle {
+        position: relative;
+        display: inline-block;
+        width: 50px;
+        height: 26px;
+        background-color: #e0e0e0;
+        border-radius: 34px;
+        margin-right: 10px;
+        transition: all 0.3s ease;
+    }
+    
+    .switch-toggle:before {
+        position: absolute;
+        content: "";
+        height: 20px;
+        width: 20px;
+        left: 3px;
+        bottom: 3px;
+        background-color: white;
+        border-radius: 50%;
+        transition: all 0.3s ease;
+    }
+    
+    .switch-checkbox:checked + .switch-toggle {
+        background-color: #4361ee;
+    }
+    
+    .switch-checkbox:checked + .switch-toggle:before {
+        transform: translateX(24px);
+    }
+    
+    .btn-save {
+        background-color: #4361ee;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        padding: 14px 25px;
+        font-weight: 600;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-save:hover {
+        background-color: #3652d9;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(67, 97, 238, 0.4);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+{% with messages = get_flashed_messages() %}
+    {% if messages %}
+        <div class="flash-messages">
+            {% for message in messages %}
+                <div class="flash-message">{{ message }}</div>
+            {% endfor %}
+        </div>
+    {% endif %}
+{% endwith %}
+
+<div class="settings-container">
+    <h1 class="settings-title">Configurações do Grupo</h1>
+    
+    <div class="settings-section">
+        <h2 class="section-title">Informações do Grupo</h2>
+        <p class="section-description">Altere o nome e outras configurações básicas do seu grupo familiar.</p>
+        
+        <form method="POST">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="form-group">
+                <label for="family_name" class="form-label">Nome do Grupo</label>
+                <input type="text" name="family_name" id="family_name" class="form-input" value="{{ current_user.family.name }}" placeholder="Digite o nome do grupo" required>
+            </div>
+            
+            <button type="submit" class="btn-save">
+                <i class="fas fa-save"></i> Salvar Alterações
+            </button>
+        </form>
+    </div>
+    
+    <div class="divider"></div>
+    
+    <div class="settings-section">
+        <h2 class="section-title">Preferências de Visualização</h2>
+        <p class="section-description">Configurações de visualização do calendário e eventos.</p>
+        
+        <div class="form-group">
+            <label class="form-label">Notificações</label>
+            <label class="form-switch">
+                <input type="checkbox" class="switch-checkbox" name="email_notifications" id="emailNotifications" checked>
+                <span class="switch-toggle"></span>
+                Receber notificações por email
+            </label>
+        </div>
+    </div>
+    
+    <div class="divider"></div>
+    
+    <div class="settings-section">
+        <h2 class="section-title">Gerenciamento de Calendário</h2>
+        <p class="section-description">Opções para gerenciar sua participação no calendário atual.</p>
+        
+        <div class="form-group">
+            <a href="{{ url_for('main.leave_calendar') }}" class="btn-danger" style="display: inline-block; background-color: #f8f9fa; color: #dc3545; border: 1px solid #dc3545; padding: 10px 20px; border-radius: 8px; text-decoration: none; font-weight: 500; margin-bottom: 15px;">
+                <i class="fas fa-sign-out-alt"></i> Sair do Calendário
+            </a>
+            <p style="color: #666; font-size: 0.9rem;">
+                Ao sair deste calendário, você perderá acesso a todos os eventos e tarefas compartilhadas.
+                Esta ação não exclui o calendário para outros membros.
+            </p>
+        </div>
+        
+        {% if current_user.is_admin %}
+        <div class="form-group" style="margin-top: 30px;">
+            <button type="button" onclick="document.getElementById('deleteCalendarModal').style.display='flex'" class="btn-danger" style="background-color: #f8f9fa; color: #dc3545; border: 1px solid #dc3545; padding: 10px 20px; border-radius: 8px; text-decoration: none; font-weight: 500; cursor: pointer;">
+                <i class="fas fa-trash"></i> Excluir Calendário
+            </button>
+            <p style="color: #666; font-size: 0.9rem;">
+                <strong>Atenção:</strong> Esta ação excluirá permanentemente este calendário e todos os seus dados para todos os membros.
+                Esta opção está disponível apenas para administradores.
+            </p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Modal de confirmação de exclusão do calendário -->
+<div id="deleteCalendarModal" class="confirm-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.5); z-index: 1000; align-items: center; justify-content: center;">
+    <div class="confirm-modal-content" style="background-color: white; border-radius: 16px; width: 90%; max-width: 500px; padding: 30px; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2); text-align: center; animation: fadeIn 0.3s;">
+        <div class="confirm-icon" style="font-size: 40px; color: #dc3545; margin-bottom: 15px;">
+            <i class="fas fa-exclamation-triangle"></i>
+        </div>
+        <h3 style="font-size: 22px; font-weight: 600; color: #212529; margin-bottom: 15px;">Confirmação de exclusão</h3>
+        <div style="color: #495057; font-size: 16px; line-height: 1.6; margin-bottom: 25px;">
+            <p>Você está prestes a <strong style="color: #dc3545;">excluir permanentemente</strong> este calendário.</p>
+            <p>Todos os dados, incluindo eventos e tarefas, serão perdidos para todos os membros.</p>
+            <p>Esta ação <strong style="color: #dc3545;">não pode ser desfeita</strong>.</p>
+        </div>
+        <div style="display: flex; justify-content: center; gap: 15px;">
+            <a href="{{ url_for('main.delete_calendar') }}" style="background-color: #dc3545; color: white; padding: 10px 24px; border-radius: 8px; font-weight: 500; font-size: 15px; cursor: pointer; text-decoration: none; border: none;">Sim, excluir calendário</a>
+            <button onclick="document.getElementById('deleteCalendarModal').style.display='none'" style="background-color: #f8f9fa; color: #495057; padding: 10px 24px; border-radius: 8px; font-weight: 500; font-size: 15px; cursor: pointer; border: 1px solid #dee2e6;">Cancelar</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de confirmação para sair do calendário -->
+<div id="leaveCalendarModal" class="confirm-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.5); z-index: 1000; align-items: center; justify-content: center;">
+    <div class="confirm-modal-content" style="background-color: white; border-radius: 16px; width: 90%; max-width: 500px; padding: 30px; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2); text-align: center; animation: fadeIn 0.3s;">
+        <div class="confirm-icon" style="font-size: 40px; color: #dc3545; margin-bottom: 15px;">
+            <i class="fas fa-sign-out-alt"></i>
+        </div>
+        <h3 style="font-size: 22px; font-weight: 600; color: #212529; margin-bottom: 15px;">Confirmação: Sair do Calendário</h3>
+        <div style="color: #495057; font-size: 16px; line-height: 1.6; margin-bottom: 25px;">
+            <p>Você está prestes a <strong style="color: #dc3545;">sair deste calendário</strong>.</p>
+            <p>Você perderá acesso a todos os eventos e tarefas compartilhadas neste calendário.</p>
+            <p>Outros membros da família continuarão tendo acesso normal ao calendário.</p>
+        </div>
+        <div style="display: flex; justify-content: center; gap: 15px;">
+            <a href="/" style="background-color: #dc3545; color: white; padding: 10px 24px; border-radius: 8px; font-weight: 500; font-size: 15px; cursor: pointer; text-decoration: none; border: none;">Sim, sair do calendário</a>
+            <button onclick="document.getElementById('leaveCalendarModal').style.display='none'" style="background-color: #f8f9fa; color: #495057; padding: 10px 24px; border-radius: 8px; font-weight: 500; font-size: 15px; cursor: pointer; border: 1px solid #dee2e6;">Cancelar</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Verificar estado do toggle
+    const emailNotifications = document.getElementById('emailNotifications');
+    
+    emailNotifications.addEventListener('change', function() {
+        // Aqui você poderia adicionar código para enviar esta configuração ao servidor via AJAX
+        console.log('Notificações por email: ' + this.checked);
+    });
+    
+    // Fechar modal ao clicar fora dele
+    window.onclick = function(event) {
+        const deleteModal = document.getElementById('deleteCalendarModal');
+        const leaveModal = document.getElementById('leaveCalendarModal');
+        
+        if (event.target == deleteModal) {
+            deleteModal.style.display = 'none';
+        }
+        
+        if (event.target == leaveModal) {
+            leaveModal.style.display = 'none';
+        }
+    };
+</script>
+{% endblock %} 

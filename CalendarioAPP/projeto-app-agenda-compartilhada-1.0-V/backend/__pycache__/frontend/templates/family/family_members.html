@@ -1,0 +1,195 @@
+{% extends "layout/app_layout.html" %}
+
+{% block title %}Membros - Agenda Familiar{% endblock %}
+
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/family_members.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="members-container">
+    <div class="members-header">
+        <h1 class="members-title">Membros da Família</h1>
+    </div>
+
+    {% if current_user in current_user.family.admins %}
+    <div class="invite-section">
+        <h2 class="invite-title">Link de Convite</h2>
+        <p>Compartilhe este link com os membros da família para que eles possam se juntar ao grupo.</p>
+        
+        <div class="invite-link-container">
+            <input type="text" class="invite-link" id="inviteLink" value="{{ invite_link }}" readonly>
+            <button class="copy-btn" onclick="copyInviteLink()">
+                <i class="fas fa-copy"></i> Copiar
+            </button>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="members-list">
+        {% for member in members %}
+        <div class="member-item">
+            <div class="member-avatar">
+                {{ member.username|first|upper }}
+            </div>
+            <div class="member-info">
+                <div class="member-name">{{ member.username }}</div>
+                <div class="member-email">{{ member.email }}</div>
+            </div>
+            
+            <span class="member-role {% if member in member.family.admins %}role-admin{% else %}role-member{% endif %}">
+                {% if member in member.family.admins %}
+                    Administrador
+                {% else %}
+                    Membro
+                {% endif %}
+            </span>
+
+            {% if current_user in current_user.family.admins and member != current_user %}
+            <div class="member-actions">
+                {% if member not in member.family.admins %}
+                <a href="{{ url_for('main.make_admin', user_id=member.id) }}" class="action-btn admin-btn">
+                    <i class="fas fa-crown"></i> Tornar Admin
+                </a>
+                {% else %}
+                <a href="{{ url_for('main.remove_admin', user_id=member.id) }}" class="action-btn revoke-btn">
+                    <i class="fas fa-user-minus"></i> Remover Admin
+                </a>
+                {% endif %}
+                <a href="{{ url_for('main.remove_member', user_id=member.id) }}" class="action-btn remove-btn" onclick="return confirm('Tem certeza que deseja remover {{ member.username }} do grupo familiar?')">
+                    <i class="fas fa-times-circle"></i> Remover
+                </a>
+            </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<style>
+    .action-btn {
+        display: inline-block;
+        padding: 8px 12px;
+        margin: 0 5px;
+        border-radius: 20px;
+        text-decoration: none;
+        font-weight: 500;
+        font-size: 14px;
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        border: none;
+        cursor: pointer;
+    }
+
+    .admin-btn {
+        background-color: #4C6EF5;
+        color: white;
+    }
+
+    .admin-btn:hover {
+        background-color: #3b5bdb;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    }
+
+    .revoke-btn {
+        background-color: #868E96;
+        color: white;
+    }
+
+    .revoke-btn:hover {
+        background-color: #495057;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    }
+
+    .remove-btn {
+        background-color: #FA5252;
+        color: white;
+    }
+
+    .remove-btn:hover {
+        background-color: #E03131;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    }
+
+    .member-item {
+        display: flex;
+        align-items: center;
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 15px;
+        background-color: white;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        transition: transform 0.3s ease;
+    }
+
+    .member-item:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+
+    .member-avatar {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        background-color: #4C6EF5;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+        font-weight: bold;
+        margin-right: 15px;
+    }
+
+    .member-info {
+        flex-grow: 1;
+    }
+
+    .member-name {
+        font-weight: 600;
+        font-size: 16px;
+    }
+
+    .member-email {
+        color: #6c757d;
+        font-size: 14px;
+    }
+
+    .member-role {
+        font-size: 13px;
+        font-weight: 500;
+        padding: 5px 10px;
+        border-radius: 15px;
+        margin-right: 15px;
+    }
+
+    .role-admin {
+        background-color: #FFD43B;
+        color: #212529;
+    }
+
+    .role-member {
+        background-color: #E9ECEF;
+        color: #495057;
+    }
+</style>
+
+<script>
+function copyInviteLink() {
+    var copyText = document.getElementById("inviteLink");
+    copyText.select();
+    copyText.setSelectionRange(0, 99999);
+    document.execCommand("copy");
+    
+    var copyBtn = document.querySelector('.copy-btn');
+    var originalText = copyBtn.innerHTML;
+    copyBtn.innerHTML = '<i class="fas fa-check"></i> Copiado!';
+    setTimeout(function() {
+        copyBtn.innerHTML = originalText;
+    }, 2000);
+}
+</script>
+{% endblock %} 

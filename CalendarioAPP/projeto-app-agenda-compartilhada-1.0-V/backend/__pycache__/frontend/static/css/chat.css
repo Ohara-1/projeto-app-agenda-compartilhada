@@ -1,0 +1,158 @@
+/* chat.css */
+
+.chat-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 2rem;
+    font-family: Arial, sans-serif;
+}
+
+.chat-container h2 {
+    font-size: 1.8rem;
+    margin-bottom: 1rem;
+}
+
+.messages-container {
+    background-color: #f9f9f9;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 1rem;
+    max-height: 400px;
+    overflow-y: auto;
+    margin-bottom: 1.5rem;
+}
+
+.message-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.message-item {
+    display: flex;
+    margin-bottom: 1rem;
+    gap: 0.8rem;
+}
+
+.own-message {
+    flex-direction: row-reverse;
+    text-align: right;
+}
+
+.message-avatar {
+    flex-shrink: 0;
+}
+
+.avatar-circle {
+    width: 35px;
+    height: 35px;
+    background-color: #007bff;
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 1rem;
+}
+
+.avatar-small {
+    font-size: 0.9rem;
+}
+
+.message-content {
+    background-color: #e6e6e6;
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    max-width: 70%;
+    position: relative;
+}
+
+.own-message .message-content {
+    background-color: #d1e7dd;
+}
+
+.message-header {
+    font-size: 0.8rem;
+    color: #666;
+    margin-bottom: 0.3rem;
+}
+
+.message-author {
+    font-weight: bold;
+    margin-right: 0.5rem;
+}
+
+.message-time {
+    font-style: italic;
+}
+
+.message-text {
+    font-size: 1rem;
+    color: #333;
+    word-wrap: break-word;
+}
+
+.message-form {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 1rem;
+}
+
+.message-input {
+    flex-grow: 1;
+}
+
+.message-input textarea {
+    resize: none;
+    height: 60px;
+}
+
+.message-submit .btn {
+    padding: 0.6rem 1.2rem;
+}
+
+.chat-members {
+    margin-top: 2rem;
+    background-color: #f1f1f1;
+    padding: 1rem;
+    border-radius: 8px;
+}
+
+.chat-members h3 {
+    font-size: 1.3rem;
+    margin-bottom: 1rem;
+}
+
+.member-list {
+    list-style: none;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+}
+
+.member-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.3rem 0.6rem;
+    background-color: white;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+}
+
+.admin-badge {
+    background-color: #ffc107;
+    color: #000;
+    font-size: 0.75rem;
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+    margin-left: 0.5rem;
+}
+
+.no-messages {
+    color: #777;
+    font-style: italic;
+}

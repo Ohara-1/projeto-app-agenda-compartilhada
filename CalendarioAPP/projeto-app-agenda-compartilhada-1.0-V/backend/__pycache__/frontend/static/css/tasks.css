@@ -1,0 +1,214 @@
+/* Container principal */
+.tasks-container {
+    padding: 40px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* Cabeçalho */
+.tasks-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 40px;
+}
+
+.title-section h1 {
+    font-size: 32px;
+    font-weight: 600;
+    color: #1a1a1a;
+    margin: 0;
+}
+
+.title-section .subtitle {
+    color: #666;
+    margin-top: 8px;
+    font-size: 16px;
+}
+
+.new-task-btn {
+    background: #4763E4;
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.3s ease;
+}
+
+.new-task-btn:hover {
+    background: #3651c7;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(71, 99, 228, 0.2);
+}
+
+/* Grid de tarefas */
+.tasks-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 24px;
+}
+
+/* Cards de tarefas */
+.task-card {
+    background: white;
+    border-radius: 16px;
+    padding: 20px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    transition: all 0.3s ease;
+}
+
+.task-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+}
+
+.task-card.completed {
+    background: #f8f9fe;
+}
+
+.task-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.task-status {
+    font-size: 20px;
+    color: #4763E4;
+}
+
+.task-title {
+    flex: 1;
+    font-weight: 500;
+    font-size: 16px;
+    color: #1a1a1a;
+    line-height: 1.4;
+}
+
+.task-description {
+    color: #666;
+    font-size: 14px;
+    line-height: 1.6;
+    margin-bottom: 16px;
+}
+
+/* Ações da tarefa */
+.task-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.action-btn {
+    background: none;
+    border: none;
+    padding: 4px;
+    cursor: pointer;
+    color: #666;
+    transition: all 0.2s ease;
+}
+
+.action-btn:hover {
+    color: #1a1a1a;
+}
+
+.complete-btn:hover {
+    color: #4763E4;
+}
+
+.delete-btn:hover {
+    color: #dc3545;
+}
+
+/* Rodapé da tarefa */
+.task-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 1px solid #eef0f7;
+}
+
+.task-meta {
+    display: flex;
+    gap: 16px;
+    font-size: 13px;
+    color: #666;
+}
+
+.task-meta span {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+/* Avatar do criador */
+.task-creator {
+    display: flex;
+    align-items: center;
+}
+
+.creator-avatar {
+    width: 28px;
+    height: 28px;
+    background: #4763E4;
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+/* Estado vazio */
+.empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: #666;
+}
+
+.empty-icon {
+    font-size: 48px;
+    color: #ddd;
+    margin-bottom: 20px;
+}
+
+.empty-state h2 {
+    font-size: 24px;
+    color: #333;
+    margin-bottom: 8px;
+}
+
+.empty-state p {
+    color: #666;
+    font-size: 16px;
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+    .tasks-container {
+        padding: 20px;
+    }
+
+    .tasks-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 16px;
+    }
+
+    .new-task-btn {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .tasks-grid {
+        grid-template-columns: 1fr;
+    }
+} 

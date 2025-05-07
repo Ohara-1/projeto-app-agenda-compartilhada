@@ -1,0 +1,467 @@
+{% extends "layout/app_layout.html" %}
+{% block title %}Eventos - Agenda Familiar{% endblock %}
+
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/tasks.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/task-modal.css') }}">
+<style>
+    .event-card {
+        background-color: #fff;
+        border-radius: 16px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        padding: 20px;
+        margin-bottom: 15px;
+        transition: all 0.3s ease;
+    }
+    
+    .event-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+    }
+    
+    .event-header {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        margin-bottom: 16px;
+    }
+    
+    .event-status {
+        font-size: 20px;
+        color: #4763E4;
+    }
+    
+    .event-title {
+        flex: 1;
+        font-weight: 500;
+        font-size: 16px;
+        color: #1a1a1a;
+        line-height: 1.4;
+    }
+    
+    .event-actions {
+        display: flex;
+        gap: 8px;
+    }
+    
+    .action-btn {
+        background: none;
+        border: none;
+        padding: 4px;
+        cursor: pointer;
+        color: #666;
+        transition: all 0.2s ease;
+    }
+    
+    .action-btn:hover {
+        color: #1a1a1a;
+    }
+    
+    .edit-btn:hover {
+        color: #4763E4;
+    }
+    
+    .delete-btn:hover {
+        color: #dc3545;
+    }
+    
+    .event-description {
+        color: #666;
+        font-size: 14px;
+        line-height: 1.6;
+        margin-bottom: 16px;
+    }
+    
+    .event-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 20px;
+        padding-top: 16px;
+        border-top: 1px solid #eef0f7;
+    }
+    
+    .event-meta {
+        display: flex;
+        gap: 16px;
+        font-size: 13px;
+        color: #666;
+    }
+    
+    .event-time {
+        font-size: 13px;
+        color: #666;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+    
+    .event-creator {
+        display: flex;
+        align-items: center;
+    }
+    
+    .creator-avatar {
+        width: 28px;
+        height: 28px;
+        background: #4763E4;
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+        font-weight: 600;
+    }
+    
+    .management-section {
+        margin-top: 40px;
+        background-color: #f8f9fa;
+        border-radius: 16px;
+        padding: 25px;
+        border: 1px solid #dee2e6;
+    }
+    
+    .management-header {
+        margin-bottom: 15px;
+    }
+    
+    .management-title {
+        font-size: 18px;
+        color: #495057;
+        font-weight: 600;
+        margin-bottom: 10px;
+    }
+    
+    .management-description {
+        color: #6c757d;
+        font-size: 14px;
+        line-height: 1.5;
+    }
+    
+    .clean-events-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background-color: #f8f9fa;
+        border: 1px solid #dc3545;
+        color: #dc3545;
+        padding: 10px 20px;
+        border-radius: 8px;
+        font-size: 14px;
+        text-decoration: none;
+        margin-top: 15px;
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+    
+    .clean-events-btn:hover {
+        background-color: #dc3545;
+        color: white;
+        text-decoration: none;
+    }
+    
+    .clean-events-btn i {
+        font-size: 16px;
+    }
+    
+    /* Modal de confirmação personalizado */
+    .confirm-modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        z-index: 1000;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .confirm-modal-content {
+        background-color: white;
+        border-radius: 16px;
+        width: 90%;
+        max-width: 500px;
+        padding: 30px;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        text-align: center;
+        animation: fadeIn 0.3s;
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(-20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .confirm-icon {
+        font-size: 40px;
+        color: #dc3545;
+        margin-bottom: 15px;
+    }
+    
+    .confirm-title {
+        font-size: 22px;
+        font-weight: 600;
+        color: #212529;
+        margin-bottom: 15px;
+    }
+    
+    .confirm-message {
+        color: #495057;
+        font-size: 16px;
+        line-height: 1.6;
+        margin-bottom: 25px;
+    }
+    
+    .confirm-message strong {
+        color: #dc3545;
+        font-weight: 600;
+    }
+    
+    .confirm-actions {
+        display: flex;
+        justify-content: center;
+        gap: 15px;
+    }
+    
+    .confirm-btn {
+        padding: 10px 24px;
+        border-radius: 8px;
+        font-weight: 500;
+        font-size: 15px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        border: none;
+    }
+    
+    .confirm-proceed {
+        background-color: #dc3545;
+        color: white;
+    }
+    
+    .confirm-proceed:hover {
+        background-color: #c82333;
+    }
+    
+    .confirm-cancel {
+        background-color: #f8f9fa;
+        color: #495057;
+        border: 1px solid #dee2e6;
+    }
+    
+    .confirm-cancel:hover {
+        background-color: #e9ecef;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="tasks-container">
+    <div class="tasks-header">
+        <div class="title-section">
+            <h1>Eventos</h1>
+            <p class="subtitle">Gerencie os eventos da família</p>
+        </div>
+        <a href="{{ url_for('main.events') }}?new=true" class="new-task-btn">
+            <i class="fas fa-plus"></i>
+            Novo Evento
+        </a>
+    </div>
+
+    {% if events %}
+    <div class="tasks-grid">
+        {% for event in events %}
+        <div class="event-card">
+            <div class="event-header">
+                <div class="event-status">
+                    <i class="far fa-circle"></i>
+                </div>
+                <div class="event-title">{{ event.title }}</div>
+                <div class="event-actions">
+                    <a href="{{ url_for('main.edit_event', event_id=event.id) }}" class="action-btn edit-btn">
+                        <i class="fas fa-edit"></i>
+                    </a>
+                    <button type="button" class="action-btn delete-btn" onclick="showDeleteConfirmDialog('{{ event.id }}', '{{ event.title }}')">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </div>
+            {% if event.description %}
+            <div class="event-description">{{ event.description }}</div>
+            {% endif %}
+            <div class="event-footer">
+                <div class="event-meta">
+                    <span class="event-time">
+                        <i class="far fa-calendar"></i>
+                        {{ event.start_time.strftime('%d/%m/%Y') }}
+                    </span>
+                </div>
+                <div class="event-creator">
+                    <span class="creator-avatar">{{ event.creator.username[0] | upper }}</span>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <div class="empty-icon">
+            <i class="far fa-calendar-alt"></i>
+        </div>
+        <h2>Não há eventos</h2>
+        <p>Adicione um novo evento para começar!</p>
+    </div>
+    {% endif %}
+    
+    <!-- Seção de gerenciamento de eventos -->
+    <div class="management-section" style="margin-top: 100px; margin-bottom: 40px; border-top: 1px solid #dee2e6; padding-top: 60px;">
+        <div class="management-header">
+            <h3 class="management-title">Gerenciamento de Eventos</h3>
+            <p class="management-description">
+                Utilize essa opção para remover automaticamente eventos antigos do calendário familiar.
+                Apenas eventos cuja data de término já passou serão afetados.
+            </p>
+        </div>
+        <button class="clean-events-btn" onclick="document.getElementById('cleanEventsModal').style.display='flex'">
+            <i class="fas fa-broom"></i> Limpar Eventos Antigos
+        </button>
+    </div>
+</div>
+
+<!-- Modal de Novo Evento -->
+<div id="newEventModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Novo Evento</h2>
+            <span class="close-btn" onclick="document.getElementById('newEventModal').style.display='none'">
+                <i class="fas fa-times"></i>
+            </span>
+        </div>
+        <form method="POST" action="{{ url_for('main.events') }}" class="task-form">
+            {{ form.hidden_tag() if form }}
+            <div class="form-group">
+                <label class="required">Título</label>
+                <input type="text" name="title" class="form-input" placeholder="Digite o título do evento" required>
+            </div>
+            <div class="form-group">
+                <label>Descrição</label>
+                <textarea name="description" class="form-input" placeholder="Descreva o evento (opcional)"></textarea>
+            </div>
+            <div class="form-group">
+                <label class="required">Data</label>
+                <input type="date" class="form-input" name="start_date" required>
+                <input type="hidden" name="start_time" value="00:00">
+            </div>
+            <div class="form-group">
+                <label class="required">Data de Término</label>
+                <input type="date" class="form-input" name="end_date" required>
+                <input type="hidden" name="end_time" value="23:59">
+            </div>
+            <div class="form-actions">
+                <button type="button" class="cancel-btn" onclick="document.getElementById('newEventModal').style.display='none'">Cancelar</button>
+                <button type="submit" class="submit-btn">Criar Evento</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal de confirmação de limpeza -->
+<div id="cleanEventsModal" class="confirm-modal">
+    <div class="confirm-modal-content">
+        <div class="confirm-icon">
+            <i class="fas fa-exclamation-triangle"></i>
+        </div>
+        <h3 class="confirm-title">Atenção! Limpeza de eventos antigos</h3>
+        <div class="confirm-message">
+            <p>Esta ação removerá <strong>permanentemente</strong> todos os eventos passados do calendário da família.</p>
+            <p>Apenas eventos cuja data de término já passou serão excluídos.</p>
+            <p><strong>Esta ação não pode ser desfeita.</strong></p>
+        </div>
+        <div class="confirm-actions">
+            <a href="{{ url_for('main.clean_events') }}" class="confirm-btn confirm-proceed">Sim, limpar eventos</a>
+            <button onclick="document.getElementById('cleanEventsModal').style.display='none'" class="confirm-btn confirm-cancel">Cancelar</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de confirmação de exclusão -->
+<div id="deleteConfirmDialog" class="confirm-modal">
+    <div class="confirm-modal-content">
+        <div class="confirm-icon">
+            <i class="fas fa-exclamation-triangle"></i>
+        </div>
+        <h3 class="confirm-title">Confirmação de exclusão</h3>
+        <div class="confirm-message">
+            <p>Você está prestes a excluir o evento <strong id="eventTitleToDelete"></strong>.</p>
+            <p>Este evento será removido <strong>permanentemente</strong> do calendário da família.</p>
+            <p>Esta ação <strong>não pode ser desfeita</strong>.</p>
+        </div>
+        <div class="confirm-actions">
+            <a id="confirmDeleteLink" href="#" class="confirm-btn confirm-proceed">Sim, excluir</a>
+            <button type="button" class="confirm-btn confirm-cancel" onclick="hideDeleteConfirmDialog()">Cancelar</button>
+        </div>
+    </div>
+</div>
+
+<script>
+// Verificar se deve abrir o modal automaticamente
+document.addEventListener('DOMContentLoaded', function() {
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('new') === 'true') {
+        document.getElementById('newEventModal').style.display = 'flex';
+        
+        // Preencher data atual e amanhã
+        const now = new Date();
+        const tomorrow = new Date();
+        tomorrow.setDate(now.getDate() + 1);
+        
+        // Formatar datas
+        const formatDate = function(date) {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        };
+        
+        // Preencher os campos de data
+        const startDateField = document.querySelector('input[name="start_date"]');
+        const endDateField = document.querySelector('input[name="end_date"]');
+        
+        if (startDateField) startDateField.value = formatDate(now);
+        if (endDateField) endDateField.value = formatDate(tomorrow);
+    }
+    
+    // Fechar modal ao clicar fora dele
+    window.onclick = function(event) {
+        const modal = document.getElementById('newEventModal');
+        const cleanModal = document.getElementById('cleanEventsModal');
+        const deleteModal = document.getElementById('deleteConfirmDialog');
+        
+        if (event.target == modal) {
+            modal.style.display = 'none';
+        }
+        
+        if (event.target == cleanModal) {
+            cleanModal.style.display = 'none';
+        }
+        
+        if (event.target == deleteModal) {
+            hideDeleteConfirmDialog();
+        }
+    };
+});
+
+// Funções para confirmar exclusão de evento individual
+function showDeleteConfirmDialog(eventId, eventTitle) {
+    document.getElementById('eventTitleToDelete').textContent = '"' + eventTitle + '"';
+    document.getElementById('confirmDeleteLink').href = "{{ url_for('main.delete_event', event_id=0) }}".replace('0', eventId);
+    document.getElementById('deleteConfirmDialog').style.display = 'flex';
+}
+
+function hideDeleteConfirmDialog() {
+    document.getElementById('deleteConfirmDialog').style.display = 'none';
+}
+</script>
+{% endblock %} 
