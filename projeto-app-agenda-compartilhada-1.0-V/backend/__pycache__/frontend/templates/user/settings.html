@@ -240,7 +240,7 @@
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <div class="form-group">
                 <label for="family_name" class="form-label">Nome do Grupo</label>
-                <input type="text" name="family_name" id="family_name" class="form-input" value="{{ current_user.family.name }}" placeholder="Digite o nome do grupo" required>
+                <input type="text" name="family_name" id="family_name" class="form-input" value="{{ current_user.active_family.name }}" placeholder="Digite o nome do grupo" required>
             </div>
             
             <button type="submit" class="btn-save">

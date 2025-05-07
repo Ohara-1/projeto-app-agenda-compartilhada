@@ -8,13 +8,27 @@ from flask import current_app
 def load_user(user_id):
     return User.query.get(int(user_id))
 
+# Tabela associativa entre usuários e famílias
+user_families = db.Table('user_families',
+    db.Column('user_id', db.Integer, db.ForeignKey('user.id'), primary_key=True),
+    db.Column('family_id', db.Integer, db.ForeignKey('family.id'), primary_key=True)
+)
+
 class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(50), nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
     password = db.Column(db.String(150), nullable=False)
-    family_id = db.Column(db.Integer, db.ForeignKey('family.id'))
+    active_family_id = db.Column(db.Integer, db.ForeignKey('family.id'), nullable=True)
     events = db.relationship('Event', backref='creator', lazy=True)
+    
+    # Relação many-to-many com famílias
+    families = db.relationship('Family', secondary=user_families, 
+                              backref=db.backref('members', lazy='dynamic'),
+                              lazy='dynamic')
+    
+    # Família ativa (a que está sendo visualizada no momento)
+    active_family = db.relationship('Family', foreign_keys=[active_family_id])
 
 family_admins = db.Table('family_admins',
     db.Column('family_id', db.Integer, db.ForeignKey('family.id')),
@@ -26,7 +40,6 @@ class Family(db.Model):
     name = db.Column(db.String(100), nullable=False)
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     admin_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    members = db.relationship('User', backref='family', lazy=True, foreign_keys=[User.family_id])
     events = db.relationship('Event', backref='family', lazy=True)
     admins = db.relationship('User', secondary=family_admins, backref='admin_families')
     

@@ -1,10 +1,10 @@
 {% extends "layout/layout.html" %}
 
-{% block title %}Convidar Membros - Grupo {{ current_user.family.name }}{% endblock %}
+{% block title %}Convidar Membros - Grupo {{ current_user.active_family.name }}{% endblock %}
 
 {% block content %}
-<div class="invite-container">
-    <h2>Convidar Membros para {{ current_user.family.name }}</h2>
+<div class="container mt-5">
+    <h2>Convidar Membros para {{ current_user.active_family.name }}</h2>
     
     <p class="invite-info">
         Compartilhe o link abaixo com pessoas que você deseja convidar para o seu grupo familiar.
@@ -16,21 +16,21 @@
         <button class="btn btn-primary copy-btn" onclick="copyInviteLink()">Copiar Link</button>
     </div>
     
-    <div class="invite-members">
+    <div class="mt-5">
         <h3>Membros Atuais</h3>
-        <ul class="member-list">
-            {% for member in current_user.family.members %}
-                <li class="member-item">
-                    <div class="avatar-circle avatar-small">
-                        {{ member.username|first|upper }}
+        <div class="list-group">
+            {% for member in current_user.active_family.members %}
+                <div class="list-group-item d-flex justify-content-between align-items-center">
+                    <div>
+                        <strong>{{ member.username }}</strong>
+                        <small>({{ member.email }})</small>
                     </div>
-                    <span>{{ member.username }}</span>
-                    {% if member.id == current_user.family.admin_id %}
+                    {% if member.id == current_user.active_family.admin_id %}
                         <span class="admin-badge">Admin</span>
                     {% endif %}
-                </li>
+                </div>
             {% endfor %}
-        </ul>
+        </div>
     </div>
     
     <a href="{{ url_for('main.calendar') }}" class="btn btn-secondary">Voltar para o Calendário</a>

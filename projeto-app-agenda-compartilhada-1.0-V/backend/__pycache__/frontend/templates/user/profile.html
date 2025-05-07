@@ -13,9 +13,9 @@
         <div>
             <h3 style="margin: 0;">{{ current_user.username }}</h3>
             <p style="margin: 0.5rem 0; color: #666;">{{ current_user.email }}</p>
-            {% if current_user.family %}
-                <p style="margin: 0.5rem 0;">Grupo: {{ current_user.family.name }}</p>
-                {% if current_user in current_user.family.admins %}
+            {% if current_user.active_family %}
+                <p style="margin: 0.5rem 0;">Grupo: {{ current_user.active_family.name }}</p>
+                {% if current_user in current_user.active_family.admins %}
                     <span class="badge badge-success">Administrador</span>
                 {% endif %}
             {% else %}

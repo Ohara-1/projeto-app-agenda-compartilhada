@@ -11,6 +11,24 @@ from backend.forms.forms import LoginForm, RegistrationForm, FamilyForm, EventFo
 
 main = Blueprint('main', __name__)
 
+# Rota para selecionar a família ativa
+@main.route('/select_family/<int:family_id>')
+@login_required
+def select_family(family_id):
+    family = Family.query.get_or_404(family_id)
+    
+    # Verificar se o usuário pertence a esta família
+    if not current_user.families.filter_by(id=family_id).first():
+        flash('Você não pertence a esta família.')
+        return redirect(url_for('main.calendar'))
+    
+    # Definir como família ativa
+    current_user.active_family_id = family_id
+    db.session.commit()
+    
+    flash(f'Alterado para o calendário: {family.name}')
+    return redirect(url_for('main.calendar'))
+
 # Função para limpar eventos antigos
 def clean_past_events(family_id):
     """
@@ -105,9 +123,10 @@ def create_family():
             db.session.commit()
             
             family.admins.append(current_user)
-            db.session.commit()
-            
-            current_user.family_id = family.id
+            # Adicionar usuário à família
+            current_user.families.append(family)
+            # Definir como família ativa
+            current_user.active_family_id = family.id
             db.session.commit()
             
             flash('Grupo familiar criado com sucesso!')
@@ -127,19 +146,29 @@ def join_family(token):
         flash('Link inválido ou expirado!')
         return redirect(url_for('main.calendar'))
     
-    current_user.family_id = family.id
+    # Verificar se o usuário já pertence a esta família
+    if current_user.families.filter_by(id=family.id).first():
+        flash(f'Você já pertence ao grupo familiar {family.name}.')
+        return redirect(url_for('main.calendar'))
+    
+    # Adicionar usuário à família
+    current_user.families.append(family)
+    # Definir como família ativa se não tiver uma
+    if not current_user.active_family_id:
+        current_user.active_family_id = family.id
     db.session.commit()
+    
     flash(f'Você entrou no grupo familiar {family.name}!')
     return redirect(url_for('main.calendar'))
 
 @main.route('/invite')
 @login_required
 def invite():
-    if not current_user.family or current_user not in current_user.family.admins:
+    if not current_user.active_family or current_user not in current_user.active_family.admins:
         flash('Você precisa ser o administrador de um grupo familiar para convidar pessoas.')
         return redirect(url_for('main.calendar'))
     
-    token = current_user.family.get_join_token()
+    token = current_user.active_family.get_join_token()
     invite_link = url_for('main.join_family', token=token, _external=True)
     return render_template('family/invite.html', invite_link=invite_link)
 
@@ -178,7 +207,7 @@ def calendar():
     first_day_of_month = cal_module.monthrange(year, month)[0]
     days_in_month = cal_module.monthrange(year, month)[1]
     
-    if not current_user.family:
+    if not current_user.active_family_id:
         # Renderiza o calendário vazio com aviso
         return render_template('calendar/calendar.html', 
                               events=[], 
@@ -192,21 +221,21 @@ def calendar():
                               no_family=True)
     
     # Limpar eventos antigos
-    removed_count = clean_past_events(current_user.family_id)
+    removed_count = clean_past_events(current_user.active_family_id)
     if removed_count > 0:
         flash(f'{removed_count} eventos antigos foram automaticamente removidos.')
     
-    # Buscar todos os eventos do mês selecionado para a família do usuário
+    # Buscar todos os eventos do mês selecionado para a família ativa do usuário
     start_date = datetime(year, month, 1)
     if month == 12:
         end_date = datetime(year + 1, 1, 1)
     else:
         end_date = datetime(year, month + 1, 1)
     
-    events = Event.query.filter_by(family_id=current_user.family_id).all()
+    events = Event.query.filter_by(family_id=current_user.active_family_id).all()
     
     # Buscar todas as tarefas da família
-    tasks = Task.query.filter_by(family_id=current_user.family_id, completed=False).all()
+    tasks = Task.query.filter_by(family_id=current_user.active_family_id, completed=False).all()
     
     # Filtrar eventos futuros para a seção de próximos eventos
     upcoming_events = [event for event in events if event.start_time >= datetime.now()]
@@ -214,7 +243,7 @@ def calendar():
     upcoming_events = upcoming_events[:5]
     
     # Tarefas pendentes
-    pending_tasks = Task.query.filter_by(family_id=current_user.family_id, completed=False).order_by(Task.due_date.asc()).limit(5).all()
+    pending_tasks = Task.query.filter_by(family_id=current_user.active_family_id, completed=False).order_by(Task.due_date.asc()).limit(5).all()
     
     return render_template('calendar/calendar.html', 
                           events=events, 
@@ -230,7 +259,7 @@ def calendar():
 @main.route('/event/new', methods=['GET', 'POST'])
 @login_required
 def new_event():
-    if not current_user.family:
+    if not current_user.active_family_id:
         flash('Você precisa pertencer a um grupo familiar para criar eventos.')
         return redirect(url_for('main.calendar'))
     
@@ -242,7 +271,7 @@ def new_event():
             start_time=form.start_time.data,
             end_time=form.end_time.data,
             user_id=current_user.id,
-            family_id=current_user.family_id
+            family_id=current_user.active_family_id
         )
         db.session.add(event)
         db.session.commit()
@@ -256,7 +285,7 @@ def new_event():
 def edit_event(event_id):
     event = Event.query.get_or_404(event_id)
     # Permitir apenas o criador do evento ou o admin da família
-    if event.family_id != current_user.family_id or (event.user_id != current_user.id and current_user not in current_user.family.admins):
+    if event.family_id != current_user.active_family_id or (event.user_id != current_user.id and current_user not in event.family.admins):
         flash('Você não tem permissão para editar este evento.')
         return redirect(url_for('main.calendar'))
     form = EventForm()
@@ -280,7 +309,7 @@ def edit_event(event_id):
 def delete_event(event_id):
     event = Event.query.get_or_404(event_id)
     # Permitir apenas o criador do evento ou o admin da família
-    if event.family_id != current_user.family_id or (event.user_id != current_user.id and current_user not in current_user.family.admins):
+    if event.family_id != current_user.active_family_id or (event.user_id != current_user.id and current_user not in event.family.admins):
         flash('Você não tem permissão para excluir este evento.')
         return redirect(url_for('main.calendar'))
     
@@ -292,39 +321,44 @@ def delete_event(event_id):
 @main.route('/family/members')
 @login_required
 def family_members():
-    if not current_user.family:
+    if not current_user.active_family_id:
         flash('Você precisa pertencer a um grupo familiar para ver os membros.')
         return redirect(url_for('main.calendar'))
     
-    members = User.query.filter_by(family_id=current_user.family_id).all()
+    # Obter a família ativa
+    active_family = Family.query.get(current_user.active_family_id)
+    members = active_family.members.all()
     
     # Gerar link de convite se o usuário for admin
     invite_link = None
-    if current_user in current_user.family.admins:
-        invite_link = url_for('main.join_family', token=current_user.family.get_join_token(), _external=True)
+    if current_user in active_family.admins:
+        invite_link = url_for('main.join_family', token=active_family.get_join_token(), _external=True)
     
     return render_template('family/family_members.html', members=members, invite_link=invite_link)
 
 @main.route('/family/make_admin/<int:user_id>')
 @login_required
 def make_admin(user_id):
-    if not current_user.family:
+    if not current_user.active_family_id:
         flash('Você precisa pertencer a um grupo familiar.')
         return redirect(url_for('main.calendar'))
     
-    if current_user not in current_user.family.admins:
+    if current_user not in current_user.active_family.admins:
         flash('Apenas administradores podem promover outros membros.')
         return redirect(url_for('main.family_members'))
     
     user = User.query.get_or_404(user_id)
-    if user.family_id != current_user.family_id:
+    active_family = Family.query.get(current_user.active_family_id)
+    
+    # Verificar se o usuário pertence à família ativa
+    if not user in active_family.members.all():
         flash('Este usuário não pertence à sua família.')
         return redirect(url_for('main.family_members'))
     
-    if user in current_user.family.admins:
+    if user in active_family.admins:
         flash('Este usuário já é um administrador.')
     else:
-        current_user.family.admins.append(user)
+        active_family.admins.append(user)
         db.session.commit()
         flash(f'{user.username} agora é um administrador do grupo.')
     
@@ -333,12 +367,15 @@ def make_admin(user_id):
 @main.route('/family/remove_admin/<int:user_id>')
 @login_required
 def remove_admin(user_id):
-    if not current_user.family or current_user not in current_user.family.admins:
+    if not current_user.active_family_id or current_user not in current_user.active_family.admins:
         flash('Você não tem permissão para realizar esta ação.')
         return redirect(url_for('main.family_members'))
     
     user = User.query.get_or_404(user_id)
-    if user.family_id != current_user.family_id:
+    active_family = Family.query.get(current_user.active_family_id)
+    
+    # Verificar se o usuário pertence à família ativa
+    if not user in active_family.members.all():
         flash('Este usuário não pertence à sua família.')
         return redirect(url_for('main.family_members'))
     
@@ -346,8 +383,8 @@ def remove_admin(user_id):
         flash('Você não pode remover seus próprios privilégios de administrador.')
         return redirect(url_for('main.family_members'))
     
-    if user in current_user.family.admins:
-        current_user.family.admins.remove(user)
+    if user in active_family.admins:
+        active_family.admins.remove(user)
         db.session.commit()
         flash(f'Privilégios de administrador removidos de {user.username}.')
     else:
@@ -358,12 +395,15 @@ def remove_admin(user_id):
 @main.route('/family/remove_member/<int:user_id>')
 @login_required
 def remove_member(user_id):
-    if not current_user.family or current_user not in current_user.family.admins:
+    if not current_user.active_family_id or current_user not in current_user.active_family.admins:
         flash('Você não tem permissão para realizar esta ação.')
         return redirect(url_for('main.family_members'))
     
     user = User.query.get_or_404(user_id)
-    if user.family_id != current_user.family_id:
+    active_family = Family.query.get(current_user.active_family_id)
+    
+    # Verificar se o usuário pertence à família ativa
+    if not user in active_family.members.all():
         flash('Este usuário não pertence à sua família.')
         return redirect(url_for('main.family_members'))
     
@@ -372,11 +412,16 @@ def remove_member(user_id):
         return redirect(url_for('main.family_members'))
     
     # Remover privilégios de admin se tiver
-    if user in current_user.family.admins:
-        current_user.family.admins.remove(user)
+    if user in active_family.admins:
+        active_family.admins.remove(user)
     
-    # Remover do grupo
-    user.family_id = None
+    # Remover da família
+    active_family.members.remove(user)
+    
+    # Se esta era a família ativa do usuário, definir como nulo
+    if user.active_family_id == active_family.id:
+        user.active_family_id = None
+        
     db.session.commit()
     flash(f'{user.username} foi removido do grupo familiar.')
     
@@ -385,14 +430,15 @@ def remove_member(user_id):
 @main.route('/tasks', methods=['GET', 'POST'])
 @login_required
 def tasks():
-    if not current_user.family:
+    if not current_user.active_family_id:
         flash('Você precisa pertencer a um grupo familiar para gerenciar tarefas.')
         return redirect(url_for('main.calendar'))
     
     form = TaskForm()
     
     # Adiciona os membros da família e a opção "todos"
-    family_members = User.query.filter_by(family_id=current_user.family_id).all()
+    active_family = Family.query.get(current_user.active_family_id)
+    family_members = active_family.members.all()
     form.assigned_to_id.choices = [(0, 'Todos')] + [(user.id, user.username) for user in family_members]
     
     if form.validate_on_submit():
@@ -401,7 +447,7 @@ def tasks():
             description=form.description.data if form.description.data else None,
             due_date=form.due_date.data,
             user_id=current_user.id,
-            family_id=current_user.family_id,
+            family_id=current_user.active_family_id,
             assigned_to_id=form.assigned_to_id.data if form.assigned_to_id.data != 0 else None
         )
         db.session.add(task)
@@ -409,14 +455,14 @@ def tasks():
         flash('Tarefa criada com sucesso!')
         return redirect(url_for('main.tasks'))
     
-    tasks = Task.query.filter_by(family_id=current_user.family_id).order_by(Task.due_date.asc()).all()
+    tasks = Task.query.filter_by(family_id=current_user.active_family_id).order_by(Task.due_date.asc()).all()
     return render_template('tasks/tasks.html', tasks=tasks, form=form)
 
 @main.route('/tasks/complete/<int:task_id>')
 @login_required
 def complete_task(task_id):
     task = Task.query.get_or_404(task_id)
-    if task.family_id != current_user.family_id:
+    if task.family_id != current_user.active_family_id:
         flash('Você não tem permissão para alterar esta tarefa.')
         return redirect(url_for('main.tasks'))
     
@@ -429,7 +475,7 @@ def complete_task(task_id):
 @login_required
 def delete_task(task_id):
     task = Task.query.get_or_404(task_id)
-    if task.family_id != current_user.family_id or (task.user_id != current_user.id and current_user not in current_user.family.admins):
+    if task.family_id != current_user.active_family_id or (task.user_id != current_user.id and current_user not in current_user.active_family.admins):
         flash('Você não tem permissão para excluir esta tarefa.')
         return redirect(url_for('main.tasks'))
     
@@ -443,8 +489,8 @@ def delete_task(task_id):
 def settings():
     if request.method == 'POST':
         family_name = request.form.get('family_name')
-        if family_name and current_user.family:
-            current_user.family.name = family_name
+        if family_name and current_user.active_family:
+            current_user.active_family.name = family_name
             db.session.commit()
             flash('Configurações atualizadas com sucesso!', 'success')
             return redirect(url_for('main.settings'))
@@ -454,15 +500,15 @@ def settings():
 @main.route('/settings/clean_past_events', methods=['POST'])
 @login_required
 def clean_past_events_manual():
-    if not current_user.family:
+    if not current_user.active_family_id:
         flash('Você precisa pertencer a um grupo familiar para usar esta função.')
         return redirect(url_for('main.calendar'))
     
-    if current_user not in current_user.family.admins:
+    if current_user not in current_user.active_family.admins:
         flash('Apenas administradores podem limpar eventos antigos.')
         return redirect(url_for('main.settings'))
     
-    removed_count = clean_past_events(current_user.family_id)
+    removed_count = clean_past_events(current_user.active_family_id)
     
     if removed_count > 0:
         flash(f'{removed_count} eventos antigos foram removidos com sucesso!')
@@ -475,10 +521,10 @@ def clean_past_events_manual():
 @main.route('/api/tasks', methods=['GET'])
 @login_required
 def api_tasks():
-    if not current_user.family:
+    if not current_user.active_family_id:
         return jsonify({'error': 'No family group'}), 403
     
-    tasks = Task.query.filter_by(family_id=current_user.family_id).all()
+    tasks = Task.query.filter_by(family_id=current_user.active_family_id).all()
     result = []
     
     for task in tasks:
@@ -497,7 +543,7 @@ def api_tasks():
 @main.route('/api/tasks', methods=['POST'])
 @login_required
 def api_create_task():
-    if not current_user.family:
+    if not current_user.active_family_id:
         return jsonify({'error': 'No family group'}), 403
     
     data = request.json
@@ -508,7 +554,8 @@ def api_create_task():
     assigned_to_id = data.get('assigned_to_id')
     if assigned_to_id:
         user = User.query.get(assigned_to_id)
-        if not user or user.family_id != current_user.family_id:
+        active_family = Family.query.get(current_user.active_family_id)
+        if not user or not user in active_family.members.all():
             return jsonify({'error': 'Invalid assigned user'}), 400
     
     task = Task(
@@ -516,7 +563,7 @@ def api_create_task():
         description=data.get('description', ''),
         due_date=datetime.fromisoformat(data.get('due_date')) if data.get('due_date') else None,
         user_id=current_user.id,
-        family_id=current_user.family_id,
+        family_id=current_user.active_family_id,
         assigned_to_id=assigned_to_id
     )
     db.session.add(task)
@@ -531,7 +578,7 @@ def api_create_task():
 @login_required
 def api_update_task(task_id):
     task = Task.query.get_or_404(task_id)
-    if task.family_id != current_user.family_id:
+    if task.family_id != current_user.active_family_id:
         return jsonify({'error': 'Permission denied'}), 403
     
     data = request.json
@@ -551,7 +598,8 @@ def api_update_task(task_id):
         # Verifica se o usuário existe e pertence à família
         if data['assigned_to_id']:
             user = User.query.get(data['assigned_to_id'])
-            if not user or user.family_id != current_user.family_id:
+            active_family = Family.query.get(current_user.active_family_id)
+            if not user or not user in active_family.members.all():
                 return jsonify({'error': 'Invalid assigned user'}), 400
         task.assigned_to_id = data['assigned_to_id']
     
@@ -562,7 +610,7 @@ def api_update_task(task_id):
 @login_required
 def api_delete_task(task_id):
     task = Task.query.get_or_404(task_id)
-    if task.family_id != current_user.family_id or (task.user_id != current_user.id and current_user not in current_user.family.admins):
+    if task.family_id != current_user.active_family_id or (task.user_id != current_user.id and current_user not in current_user.active_family.admins):
         return jsonify({'error': 'Permission denied'}), 403
     
     db.session.delete(task)
@@ -572,7 +620,7 @@ def api_delete_task(task_id):
 @main.route('/dashboard')
 @login_required
 def dashboard():
-    if not current_user.family:
+    if not current_user.active_family_id:
         flash('Você precisa pertencer a um grupo familiar para acessar o dashboard.')
         return redirect(url_for('main.calendar'))
     
@@ -581,30 +629,32 @@ def dashboard():
     # Eventos do dia
     today_start = datetime.combine(today, datetime.min.time())
     today_end = datetime.combine(today, datetime.max.time())
-    todays_events = Event.query.filter_by(family_id=current_user.family_id).filter(
+    todays_events = Event.query.filter_by(family_id=current_user.active_family_id).filter(
         Event.start_time.between(today_start, today_end)
     ).all()
     
     # Eventos futuros (próximos 7 dias)
     week_end = today_start + timedelta(days=7)
-    upcoming_events = Event.query.filter_by(family_id=current_user.family_id).filter(
+    upcoming_events = Event.query.filter_by(family_id=current_user.active_family_id).filter(
         Event.start_time.between(today_start, week_end)
     ).order_by(Event.start_time).all()
     
     # Tarefas pendentes atribuídas ao usuário atual
     my_tasks = Task.query.filter_by(
         assigned_to_id=current_user.id, 
-        completed=False
+        completed=False,
+        family_id=current_user.active_family_id
     ).order_by(Task.due_date).all()
     
     # Tarefas familiares pendentes
     family_tasks = Task.query.filter_by(
-        family_id=current_user.family_id,
+        family_id=current_user.active_family_id,
         completed=False
     ).filter(Task.assigned_to_id != current_user.id).order_by(Task.due_date).all()
     
     # Membros da família
-    family_members = User.query.filter_by(family_id=current_user.family_id).all()
+    active_family = Family.query.get(current_user.active_family_id)
+    family_members = active_family.members.all()
     
     return render_template('dashboard/dashboard.html',
                           today=today,

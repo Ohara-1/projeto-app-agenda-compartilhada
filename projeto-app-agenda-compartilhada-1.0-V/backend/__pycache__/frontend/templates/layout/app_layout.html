@@ -6,6 +6,54 @@
     <title>{% block title %}Agenda Familiar{% endblock %}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/app_styles.css') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .families-list {
+            margin-bottom: 20px;
+            padding: 10px;
+        }
+        
+        .family-item {
+            padding: 8px;
+            margin-bottom: 5px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .family-item:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+        
+        .family-item.active {
+            background-color: rgba(255, 255, 255, 0.15);
+            font-weight: bold;
+        }
+        
+        .family-icon {
+            margin-right: 10px;
+            color: #fff;
+            opacity: 0.7;
+        }
+        
+        .family-name {
+            flex: 1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .families-header {
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 0.8em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+            margin-top: 15px;
+            padding-left: 5px;
+        }
+    </style>
     {% block styles %}{% endblock %}
 </head>
 <body>
@@ -18,18 +66,27 @@
             <div class="circle-decoration circle-3"></div>
             <div class="dot-pattern"></div>
             
-            <!-- Selector de calendário -->
+            <!-- Logo -->
             <div class="header-logo">
                 <img src="{{ url_for('static', filename='images/calendario.png') }}" alt="Calendário" class="logo-image">
                 <div class="logo-text">AGENDA FAMILIAR</div>
             </div>
             
-            <div class="calendar-selector">
-                <img src="{{ url_for('static', filename='images/calendario.png') }}" alt="Calendário" width="24" height="24">
-                {% if current_user.family %}
-                    <span>{{ current_user.family.name }}</span>
+            <!-- Lista de famílias do usuário -->
+            <div class="families-list">
+                <div class="families-header">Meus Calendários</div>
+                {% if current_user.families.all() %}
+                    {% for family in current_user.families.all() %}
+                        <a href="{{ url_for('main.select_family', family_id=family.id) }}" class="family-item {% if current_user.active_family_id == family.id %}active{% endif %}">
+                            <i class="fas fa-users family-icon"></i>
+                            <div class="family-name">{{ family.name }}</div>
+                        </a>
+                    {% endfor %}
                 {% else %}
-                    <span>Nenhum calendário</span>
+                    <div class="family-item">
+                        <i class="fas fa-exclamation-circle family-icon"></i>
+                        <div class="family-name">Nenhum calendário</div>
+                    </div>
                 {% endif %}
             </div>
             
@@ -39,7 +96,7 @@
             </a>
             
             <!-- Menu de navegação -->
-            {% if current_user.family %}
+            {% if current_user.active_family_id %}
                 <nav class="nav-menu">
                     <a href="{{ url_for('main.dashboard') }}" class="nav-item {% if request.endpoint == 'main.dashboard' %}active{% endif %}">
                         <i class="fas fa-th-large"></i> Dashboard
@@ -56,7 +113,7 @@
                     <a href="{{ url_for('main.family_members') }}" class="nav-item {% if request.endpoint == 'main.family_members' %}active{% endif %}">
                         <i class="fas fa-users"></i> Participantes
                     </a>
-                    {% if current_user in current_user.family.admins %}
+                    {% if current_user.active_family and current_user in current_user.active_family.admins %}
                         <a href="{{ url_for('main.settings') }}" class="nav-item {% if request.endpoint == 'main.settings' %}active{% endif %}">
                             <i class="fas fa-cog"></i> Configurações
                         </a>

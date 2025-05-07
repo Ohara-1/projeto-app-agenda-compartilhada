@@ -15,16 +15,16 @@
             <nav>
                 <ul class="nav-links">
                     {% if current_user.is_authenticated %}
-                        {% if current_user.family %}
+                        {% if current_user.active_family %}
                             <li><a href="{{ url_for('main.dashboard') }}" class="nav-link {% if request.endpoint == 'main.dashboard' %}active{% endif %}">Dashboard</a></li>
                         {% endif %}
                         <li><a href="{{ url_for('main.calendar') }}" class="nav-link {% if request.endpoint == 'main.calendar' %}active{% endif %}">Calendário</a></li>
                         <li><a href="{{ url_for('main.chat') }}" class="nav-link {% if request.endpoint == 'main.chat' %}active{% endif %}">Chat</a></li>
-                        {% if current_user.family %}
+                        {% if current_user.active_family %}
                             <li><a href="{{ url_for('main.tasks') }}" class="nav-link {% if request.endpoint == 'main.tasks' %}active{% endif %}">Tarefas</a></li>
                             <li><a href="{{ url_for('main.family_members') }}" class="nav-link {% if request.endpoint == 'main.family_members' %}active{% endif %}">Membros</a></li>
                         {% endif %}
-                        {% if current_user.family and current_user in current_user.family.admins %}
+                        {% if current_user.active_family and current_user in current_user.active_family.admins %}
                             <li><a href="{{ url_for('main.invite') }}" class="nav-link {% if request.endpoint == 'main.invite' %}active{% endif %}">Convidar</a></li>
                             <li><a href="{{ url_for('main.settings') }}" class="nav-link {% if request.endpoint == 'main.settings' %}active{% endif %}">Configurações</a></li>
                         {% endif %}

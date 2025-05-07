@@ -12,7 +12,7 @@
         <h1 class="members-title">Membros da Família</h1>
     </div>
 
-    {% if current_user in current_user.family.admins %}
+    {% if current_user in current_user.active_family.admins %}
     <div class="invite-section">
         <h2 class="invite-title">Link de Convite</h2>
         <p>Compartilhe este link com os membros da família para que eles possam se juntar ao grupo.</p>
@@ -37,17 +37,18 @@
                 <div class="member-email">{{ member.email }}</div>
             </div>
             
-            <span class="member-role {% if member in member.family.admins %}role-admin{% else %}role-member{% endif %}">
-                {% if member in member.family.admins %}
+            {% set active_family = current_user.active_family %}
+            <span class="member-role {% if member in active_family.admins %}role-admin{% else %}role-member{% endif %}">
+                {% if member in active_family.admins %}
                     Administrador
                 {% else %}
                     Membro
                 {% endif %}
             </span>
 
-            {% if current_user in current_user.family.admins and member != current_user %}
+            {% if current_user in current_user.active_family.admins and member != current_user %}
             <div class="member-actions">
-                {% if member not in member.family.admins %}
+                {% if member not in active_family.admins %}
                 <a href="{{ url_for('main.make_admin', user_id=member.id) }}" class="action-btn promote-btn">
                     <i class="fas fa-user-shield"></i> Tornar Admin
                 </a>
