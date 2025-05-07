@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Calendário Familiar{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    {% block styles %}{% endblock %}
+</head>
+<body>
+    <header>
+        <div class="container header-container">
+            <h1 class="logo">Calendário Familiar</h1>
+            <nav>
+                <ul class="nav-links">
+                    {% if current_user.is_authenticated %}
+                        {% if current_user.active_family %}
+                            <li><a href="{{ url_for('main.dashboard') }}" class="nav-link {% if request.endpoint == 'main.dashboard' %}active{% endif %}">Dashboard</a></li>
+                        {% endif %}
+                        <li><a href="{{ url_for('main.calendar') }}" class="nav-link {% if request.endpoint == 'main.calendar' %}active{% endif %}">Calendário</a></li>
+                        <li><a href="{{ url_for('main.chat') }}" class="nav-link {% if request.endpoint == 'main.chat' %}active{% endif %}">Chat</a></li>
+                        {% if current_user.active_family %}
+                            <li><a href="{{ url_for('main.tasks') }}" class="nav-link {% if request.endpoint == 'main.tasks' %}active{% endif %}">Tarefas</a></li>
+                            <li><a href="{{ url_for('main.family_members') }}" class="nav-link {% if request.endpoint == 'main.family_members' %}active{% endif %}">Membros</a></li>
+                        {% endif %}
+                        {% if current_user.active_family and current_user in current_user.active_family.admins %}
+                            <li><a href="{{ url_for('main.invite') }}" class="nav-link {% if request.endpoint == 'main.invite' %}active{% endif %}">Convidar</a></li>
+                            <li><a href="{{ url_for('main.settings') }}" class="nav-link {% if request.endpoint == 'main.settings' %}active{% endif %}">Configurações</a></li>
+                        {% endif %}
+                        <li><a href="{{ url_for('main.profile') }}" class="nav-link {% if request.endpoint == 'main.profile' %}active{% endif %}">Perfil</a></li>
+                        <li><a href="{{ url_for('main.logout') }}" class="nav-link">Sair</a></li>
+                    {% else %}
+                        <li><a href="{{ url_for('main.login') }}" class="nav-link {% if request.endpoint == 'main.login' %}active{% endif %}">Entrar</a></li>
+                        <li><a href="{{ url_for('main.register') }}" class="nav-link {% if request.endpoint == 'main.register' %}active{% endif %}">Cadastrar</a></li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <div class="container main-container">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    <div class="messages">
+                        {% for category, message in messages %}
+                            <div class="message {% if category != '_' %}message-{{ category }}{% endif %}">
+                                <i class="fas {% if category == 'success' %}fa-check-circle{% elif category == 'error' %}fa-exclamation-circle{% elif category == 'warning' %}fa-exclamation-triangle{% else %}fa-info-circle{% endif %}"></i>
+                                {{ message }}
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            {% endwith %}
+
+            {% block content %}{% endblock %}
+        </div>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; {{ now.year }} Calendário Familiar</p>
+        </div>
+    </footer>
+    
+    {% block scripts %}{% endblock %}
+</body>
+</html> 

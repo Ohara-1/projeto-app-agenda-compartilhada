@@ -1,0 +1,119 @@
+{% extends "layout/app_layout.html" %}
+
+{% block title %}Membros - Agenda Familiar{% endblock %}
+
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/family_members.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="members-container">
+    <div class="members-header">
+        <h1 class="members-title">Membros da Família</h1>
+    </div>
+
+    {% if current_user in current_user.active_family.admins %}
+    <div class="invite-section">
+        <h2 class="invite-title">Link de Convite</h2>
+        <p>Compartilhe este link com os membros da família para que eles possam se juntar ao grupo.</p>
+        
+        <div class="invite-link-container">
+            <input type="text" class="invite-link" id="inviteLink" value="{{ invite_link }}" readonly>
+            <button class="copy-btn" onclick="copyInviteLink()">
+                <i class="fas fa-copy"></i> Copiar
+            </button>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="members-list">
+        {% for member in members %}
+        <div class="member-item">
+            <div class="member-avatar">
+                {{ member.username|first|upper }}
+            </div>
+            <div class="member-info">
+                <div class="member-name">{{ member.username }}</div>
+                <div class="member-email">{{ member.email }}</div>
+            </div>
+            
+            {% set active_family = current_user.active_family %}
+            <span class="member-role {% if member in active_family.admins %}role-admin{% else %}role-member{% endif %}">
+                {% if member in active_family.admins %}
+                    Administrador
+                {% else %}
+                    Membro
+                {% endif %}
+            </span>
+
+            {% if current_user in current_user.active_family.admins and member != current_user %}
+            <div class="member-actions">
+                {% if member not in active_family.admins %}
+                <a href="{{ url_for('main.make_admin', user_id=member.id) }}" class="action-btn promote-btn">
+                    <i class="fas fa-user-shield"></i> Tornar Admin
+                </a>
+                {% else %}
+                <a href="{{ url_for('main.remove_admin', user_id=member.id) }}" class="action-btn promote-btn">
+                    <i class="fas fa-user"></i> Remover Admin
+                </a>
+                {% endif %}
+                <button class="action-btn remove-btn" onclick="showRemoveConfirmation('{{ member.username }}', {{ member.id }})">
+                    <i class="fas fa-user-minus"></i> Remover
+                </button>
+            </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Modal de Confirmação -->
+<div id="confirmationModal" class="confirmation-modal">
+    <div class="modal-content">
+        <h3 class="modal-title">Remover Membro</h3>
+        <p class="modal-message">Tem certeza que deseja remover <span id="memberName"></span> do grupo familiar?</p>
+        <div class="modal-actions">
+            <button class="modal-btn cancel-btn" onclick="hideConfirmationModal()">Cancelar</button>
+            <a href="#" id="confirmRemove" class="modal-btn confirm-btn">Confirmar</a>
+        </div>
+    </div>
+</div>
+
+<script>
+function copyInviteLink() {
+    var copyText = document.getElementById("inviteLink");
+    copyText.select();
+    copyText.setSelectionRange(0, 99999);
+    document.execCommand("copy");
+    
+    var copyBtn = document.querySelector('.copy-btn');
+    var originalText = copyBtn.innerHTML;
+    copyBtn.innerHTML = '<i class="fas fa-check"></i> Copiado!';
+    setTimeout(function() {
+        copyBtn.innerHTML = originalText;
+    }, 2000);
+}
+
+function showRemoveConfirmation(username, userId) {
+    var modal = document.getElementById('confirmationModal');
+    var memberNameSpan = document.getElementById('memberName');
+    var confirmButton = document.getElementById('confirmRemove');
+    
+    memberNameSpan.textContent = username;
+    confirmButton.href = '/family/remove_member/' + userId;
+    modal.style.display = 'flex';
+}
+
+function hideConfirmationModal() {
+    document.getElementById('confirmationModal').style.display = 'none';
+}
+
+// Fechar modal ao clicar fora dele
+window.onclick = function(event) {
+    var modal = document.getElementById('confirmationModal');
+    if (event.target == modal) {
+        hideConfirmationModal();
+    }
+}
+</script>
+{% endblock %} 

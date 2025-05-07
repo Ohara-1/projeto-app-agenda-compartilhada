@@ -1,0 +1,250 @@
+{% extends "layout/app_layout.html" %}
+
+{% block title %}Calendário - Agenda Familiar{% endblock %}
+
+{% block content %}
+{% if no_family %}
+    <div class="form-container" style="text-align: center;">
+        <h2 class="empty-state-title">Você ainda não participa de nenhum calendário</h2>
+        <p class="form-info">Entre em um grupo para começar a usar a Agenda Familiar!</p>
+        <div class="form-actions">
+            <a href="{{ url_for('main.create_family') }}" class="btn btn-primary">Criar grupo</a>
+            <a href="{{ url_for('main.join_family_page') }}" class="btn btn-secondary">Entrar em grupo</a>
+        </div>
+    </div>
+{% else %}
+    <div class="calendar-container">
+        <div class="calendar-header">
+            <div class="month-title">
+                {% set months = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'] %}
+                {{ months[current_month - 1] }} {{ current_year }}
+            </div>
+            <div class="calendar-nav">
+                <button class="calendar-nav-btn" onclick="location.href='?month={{ current_month - 1 if current_month > 1 else 12 }}&year={{ current_year if current_month > 1 else current_year - 1 }}'">
+                    &lt;
+                </button>
+                <button class="calendar-nav-btn today" onclick="location.href='?'">
+                    Hoje
+                </button>
+                <button class="calendar-nav-btn" onclick="location.href='?month={{ current_month + 1 if current_month < 12 else 1 }}&year={{ current_year if current_month < 12 else current_year + 1 }}'">
+                    &gt;
+                </button>
+            </div>
+        </div>
+        
+        <div class="calendar-grid">
+            <!-- Cabeçalhos de dia -->
+            <div class="calendar-day-header">Dom</div>
+            <div class="calendar-day-header">Seg</div>
+            <div class="calendar-day-header">Ter</div>
+            <div class="calendar-day-header">Qua</div>
+            <div class="calendar-day-header">Qui</div>
+            <div class="calendar-day-header">Sex</div>
+            <div class="calendar-day-header">Sáb</div>
+            
+            <!-- Dias vazios antes do início do mês -->
+            {% for i in range(first_day_of_month) %}
+                <div class="calendar-day"></div>
+            {% endfor %}
+            
+            <!-- Dias do mês -->
+            {% for day in range(1, days_in_month + 1) %}
+                <div class="calendar-day {% if today and day == today.day and current_month == today.month and current_year == today.year %}today{% endif %}">
+                    {{ day }}
+                    
+                    <!-- Eventos do dia -->
+                    {% for event in events %}
+                        {% if event.start_time.day == day and event.start_time.month == current_month and event.start_time.year == current_year %}
+                            <div class="calendar-event" onclick="location.href='{{ url_for('main.edit_event', event_id=event.id) }}'">
+                                {{ event.title }}
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+                    
+                    <!-- Tarefas do dia -->
+                    {% for task in tasks %}
+                        {% if task.due_date and task.due_date.day == day and task.due_date.month == current_month and task.due_date.year == current_year %}
+                            <div class="calendar-task" onclick="location.href='{{ url_for('main.tasks') }}'">
+                                <i class="fas fa-tasks"></i> {{ task.title }}
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+    
+    <!-- Painel à direita -->
+    <div class="side-panel">
+    <!-- Tarefas pendentes -->
+    <div class="tasks-panel">
+        <h3 class="tasks-title">Tarefas Pendentes</h3>
+            {% if pending_tasks %}
+                <ul class="tasks-list">
+                    {% for task in pending_tasks %}
+                        <li class="task-item">
+                            <span class="task-icon"><i class="fas fa-tasks"></i></span>
+                            <div class="task-content">
+                                <span class="task-title">{{ task.title }}</span>
+                                <span class="task-date">{{ task.due_date.strftime('%d/%m/%Y') }}</span>
+                            </div>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p class="empty-state">Nenhuma tarefa pendente.</p>
+            {% endif %}
+            
+            <div class="panel-actions">
+                <a href="{{ url_for('main.tasks') }}" class="panel-action-btn">Ver Tarefas</a>
+            </div>
+        </div>
+        
+        <!-- Próximos Eventos -->
+        <div class="events-panel">
+            <h3 class="events-title">Próximos Eventos</h3>
+        {% if upcoming_events %}
+                <ul class="events-list">
+                {% for event in upcoming_events %}
+                        <li class="event-item">
+                            <span class="event-icon"><i class="far fa-calendar-alt"></i></span>
+                            <div class="event-content">
+                                <span class="event-title">{{ event.title }}</span>
+                                <span class="event-date">{{ event.start_time.strftime('%d/%m/%Y') }}</span>
+                            </div>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+                <p class="empty-state">Nenhum evento próximo.</p>
+        {% endif %}
+            
+            <div class="panel-actions">
+                <a href="{{ url_for('main.events') }}" class="panel-action-btn">Ver Eventos</a>
+            </div>
+        </div>
+    </div>
+{% endif %}
+{% endblock %}
+
+{% block styles %}
+<style>
+    .calendar-task {
+        margin-top: 5px;
+        padding: 5px 8px;
+        border-radius: 5px;
+        background-color: #9b59b6;
+        color: white;
+        font-size: 0.8rem;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    
+    .calendar-task:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 3px 8px rgba(155, 89, 182, 0.2);
+    }
+    
+    .side-panel {
+        margin-top: 20px;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 20px;
+    }
+    
+    .tasks-panel, .events-panel {
+        background-color: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        padding: 20px;
+    }
+    
+    .tasks-title, .events-title {
+        font-size: 1.2rem;
+        font-weight: 600;
+        margin-bottom: 15px;
+        color: #333;
+    }
+    
+    .tasks-list, .events-list {
+        list-style-type: none;
+        padding: 0;
+        margin: 0;
+    }
+    
+    .task-item, .event-item {
+        display: flex;
+        align-items: center;
+        padding: 10px;
+        border-bottom: 1px solid #f0f0f0;
+    }
+    
+    .task-item:last-child, .event-item:last-child {
+        border-bottom: none;
+    }
+    
+    .task-icon, .event-icon {
+        margin-right: 10px;
+        width: 30px;
+        height: 30px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+    }
+    
+    .task-icon {
+        background-color: #9b59b6;
+        color: white;
+    }
+    
+    .event-icon {
+        background-color: #3498db;
+        color: white;
+    }
+    
+    .task-content, .event-content {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .task-title, .event-title {
+        font-weight: 500;
+        margin-bottom: 5px;
+    }
+    
+    .task-date, .event-date {
+        font-size: 0.8rem;
+        color: #666;
+    }
+    
+    .panel-actions {
+        margin-top: 15px;
+        text-align: center;
+    }
+    
+    .panel-action-btn {
+        display: inline-block;
+        padding: 8px 15px;
+        background-color: #f5f5f5;
+        border-radius: 5px;
+        text-decoration: none;
+        color: #333;
+        transition: all 0.2s ease;
+    }
+    
+    .panel-action-btn:hover {
+        background-color: #e0e0e0;
+    }
+    
+    .empty-state {
+        text-align: center;
+        color: #999;
+        padding: 15px 0;
+    }
+</style>
+{% endblock %} 

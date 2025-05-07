@@ -1,0 +1,221 @@
+{% extends "layout/app_layout.html" %}
+{% block title %}Eventos - Agenda Familiar{% endblock %}
+
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/tasks.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/task-modal.css') }}">
+<style>
+    /* Alinha a aparência com os cards de tarefas */
+    .task-card.event-card {
+        border-left: 4px solid #4763E4;
+        background-color: white;
+    }
+    
+    /* Ícones de data/hora no rodapé */
+    .task-meta .far.fa-clock, 
+    .task-meta .fas.fa-hourglass-end {
+        color: #4763E4;
+        font-size: 14px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="tasks-container">
+    <div class="tasks-header">
+        <div class="title-section">
+            <h1>Eventos</h1>
+            <p class="subtitle">Gerencie os eventos da família</p>
+        </div>
+        <button class="new-task-btn" onclick="openNewEventModal()">
+            <i class="fas fa-plus"></i>
+            Novo Evento
+        </button>
+    </div>
+
+    {% if events %}
+    <div class="tasks-grid">
+        {% for event in events %}
+        <div class="task-card">
+            <div class="task-header">
+                <div class="task-status">
+                    <i class="far fa-calendar-alt"></i>
+                </div>
+                <div class="task-title">{{ event.title }}</div>
+                <div class="task-actions">
+                    <a href="{{ url_for('main.edit_event', event_id=event.id) }}" class="action-btn complete-btn">
+                        <i class="fas fa-edit"></i>
+                    </a>
+                    <a href="{{ url_for('main.delete_event', event_id=event.id) }}" class="action-btn delete-btn">
+                        <i class="fas fa-trash"></i>
+                    </a>
+                </div>
+            </div>
+            {% if event.description %}
+            <div class="task-description">{{ event.description }}</div>
+            {% endif %}
+            <div class="task-footer">
+                <div class="task-meta">
+                    <span class="due-date">
+                        <i class="far fa-calendar"></i>
+                        {{ event.start_time.strftime('%d/%m/%Y') }}
+                    </span>
+                    <span class="assigned-to">
+                        <i class="fas fa-users"></i>
+                        Todos
+                    </span>
+                </div>
+                <div class="task-creator">
+                    <span class="creator-avatar">{{ event.creator.username[0] | upper }}</span>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <div class="empty-icon">
+            <i class="fas fa-calendar-alt"></i>
+        </div>
+        <h2>Não há eventos</h2>
+        <p>Adicione um novo evento para começar!</p>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Modal de Novo Evento -->
+<div id="newEventModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Novo Evento</h2>
+            <button class="close-btn" onclick="closeNewEventModal()" style="position: absolute; top: 20px; right: 15px;">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <form method="POST" action="{{ url_for('main.new_event') }}" class="task-form" id="eventForm">
+            {{ form.hidden_tag() }}
+            <div class="form-group">
+                {{ form.title.label(class="required") }}
+                {{ form.title(class="form-input", placeholder="Digite o título do evento", required=true, id="title") }}
+                {% if form.title.errors %}
+                    {% for error in form.title.errors %}
+                        <span class="error-message">{{ error }}</span>
+                    {% endfor %}
+                {% endif %}
+            </div>
+            <div class="form-group">
+                {{ form.description.label() }}
+                {{ form.description(class="form-input", placeholder="Descreva o evento (opcional)", id="description") }}
+            </div>
+            <div class="form-group">
+                <label class="required">Início</label>
+                <div class="date-time-container" style="display: flex; gap: 15px; margin-top: 5px;">
+                    <div style="flex: 2;">
+                        <label class="date-label">Data</label>
+                        <input type="date" class="form-input" id="start_date" required style="width: 100%;">
+                    </div>
+                    <div style="flex: 1;">
+                        <label class="time-label">Hora</label>
+                        <input type="time" class="form-input" id="start_time" required style="width: 100%;">
+                    </div>
+                </div>
+                <input type="hidden" id="start_time_combined" name="start_time" required>
+            </div>
+            <div class="form-group">
+                <label class="required">Término</label>
+                <div class="date-time-container" style="display: flex; gap: 15px; margin-top: 5px;">
+                    <div style="flex: 2;">
+                        <label class="date-label">Data</label>
+                        <input type="date" class="form-input" id="end_date" required style="width: 100%;">
+                    </div>
+                    <div style="flex: 1;">
+                        <label class="time-label">Hora</label>
+                        <input type="time" class="form-input" id="end_time" required style="width: 100%;">
+                    </div>
+                </div>
+                <input type="hidden" id="end_time_combined" name="end_time" required>
+            </div>
+            <div class="form-actions">
+                <button type="button" class="cancel-btn" onclick="closeNewEventModal()">Cancelar</button>
+                <button type="submit" class="submit-btn">Salvar Evento</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function openNewEventModal() {
+    document.getElementById('newEventModal').style.display = 'flex';
+}
+
+function closeNewEventModal() {
+    document.getElementById('newEventModal').style.display = 'none';
+    document.getElementById('eventForm').reset();
+}
+
+// Fechar modal ao clicar fora dele
+window.onclick = function(event) {
+    var modal = document.getElementById('newEventModal');
+    if (event.target == modal) {
+        closeNewEventModal();
+    }
+};
+
+// Combinando os campos de data e hora para envio
+document.getElementById('eventForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    var startDate = document.getElementById('start_date').value;
+    var startTime = document.getElementById('start_time').value;
+    var endDate = document.getElementById('end_date').value;
+    var endTime = document.getElementById('end_time').value;
+    
+    if (!startDate || !startTime || !endDate || !endTime) {
+        alert('Por favor, preencha todos os campos de data e hora.');
+        return;
+    }
+    
+    // Alterar de 'T' para espaço (formato esperado pelo EventForm é YYYY-MM-DD HH:MM)
+    var startDateTime = startDate + ' ' + startTime;
+    var endDateTime = endDate + ' ' + endTime;
+    
+    document.getElementById('start_time_combined').value = startDateTime;
+    document.getElementById('end_time_combined').value = endDateTime;
+    
+    console.log('Enviando evento:');
+    console.log('Título:', document.getElementById('title').value);
+    console.log('Descrição:', document.getElementById('description').value);
+    console.log('Início:', startDateTime);
+    console.log('Término:', endDateTime);
+    
+    this.submit();
+});
+
+// Abrir o modal de novo evento automaticamente quando a página for carregada
+document.addEventListener('DOMContentLoaded', function() {
+    // Se vier de um clique no menu lateral (usando um parâmetro na URL)
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('new') === 'true') {
+        openNewEventModal();
+    }
+    
+    // Definir valores padrão para os campos de data/hora
+    const now = new Date();
+    const today = now.toISOString().substr(0, 10);
+    const currentTime = now.toTimeString().substr(0, 5);
+    
+    // Definir data de hoje
+    document.getElementById('start_date').value = today;
+    document.getElementById('end_date').value = today;
+    
+    // Definir hora atual
+    document.getElementById('start_time').value = currentTime;
+    // Definir hora atual + 1 hora
+    let endHour = now.getHours() + 1;
+    let endMinutes = now.getMinutes();
+    document.getElementById('end_time').value = 
+        (endHour < 10 ? '0' + endHour : endHour) + ':' + 
+        (endMinutes < 10 ? '0' + endMinutes : endMinutes);
+});
+</script>
+{% endblock %} 

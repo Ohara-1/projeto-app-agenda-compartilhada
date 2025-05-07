@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Agenda Familiar{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/app_styles.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .families-list {
+            margin-bottom: 20px;
+            padding: 10px;
+        }
+        
+        body, html {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            font-size: 14px;
+            line-height: 1.5;
+            color: #333;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        
+        /* Reset de normalização para consistência entre navegadores */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        input, button, textarea, select {
+            font: inherit;
+        }
+        
+        .family-item {
+            padding: 8px;
+            margin-bottom: 5px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .family-item:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+        
+        .family-item.active {
+            background-color: rgba(255, 255, 255, 0.15);
+            font-weight: bold;
+        }
+        
+        .family-icon {
+            margin-right: 10px;
+            color: #fff;
+            opacity: 0.7;
+        }
+        
+        .family-name {
+            flex: 1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .families-header {
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 0.8em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+            margin-top: 15px;
+            padding-left: 5px;
+        }
+
+        /* Estilos para o dropdown de calendários */
+        .calendar-dropdown {
+            position: relative;
+            margin-bottom: 15px;
+        }
+
+        .calendar-dropdown-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        .calendar-dropdown-header:hover {
+            background-color: rgba(255, 255, 255, 0.15);
+        }
+        
+        .calendar-dropdown-header .family-icon {
+            margin-right: 10px;
+            color: white;
+            opacity: 0.7;
+        }
+        
+        .calendar-dropdown-header .family-name {
+            flex: 1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            font-size: 14px;
+            color: white;
+        }
+
+        .calendar-dropdown-content {
+            display: none;
+            position: absolute;
+            background-color: #4763E4;
+            width: 100%;
+            border-radius: 6px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            z-index: 10;
+            margin-top: 5px;
+            max-height: 250px;
+            overflow-y: auto;
+        }
+
+        .calendar-dropdown-content.show {
+            display: block;
+        }
+
+        .dropdown-item {
+            padding: 10px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            text-decoration: none;
+            color: white;
+            margin-bottom: 0;
+            border-radius: 0;
+        }
+
+        .dropdown-item .family-icon {
+            margin-right: 10px;
+            color: white;
+            opacity: 0.7;
+        }
+
+        .dropdown-item .family-name {
+            flex: 1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            font-size: 14px;
+        }
+
+        .dropdown-item:first-child {
+            border-top-left-radius: 6px;
+            border-top-right-radius: 6px;
+        }
+
+        .dropdown-item:last-child {
+            border-bottom-left-radius: 6px;
+            border-bottom-right-radius: 6px;
+        }
+
+        .dropdown-item:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .dropdown-item.active {
+            background-color: rgba(255, 255, 255, 0.2);
+            font-weight: bold;
+        }
+
+        /* Estilos para modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        .modal-content {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            width: 100%;
+            max-width: 500px;
+            position: relative;
+            animation: slideIn 0.3s ease;
+        }
+
+        .modal-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid #eee;
+            position: relative;
+        }
+
+        .modal-header h2 {
+            margin: 0;
+            font-size: 1.25rem;
+            color: #333;
+            font-weight: 600;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+            padding: 0 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #444;
+            font-size: 14px;
+        }
+
+        .form-group label.required:after {
+            content: "*";
+            color: #e74c3c;
+            margin-left: 4px;
+        }
+
+        .form-input, 
+        input[type="text"], 
+        input[type="email"], 
+        input[type="password"], 
+        input[type="date"],
+        input[type="time"],
+        textarea,
+        select {
+            width: 100%;
+            padding: 10px 12px;
+            font-size: 14px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background-color: #f9f9f9;
+            transition: border-color 0.2s;
+        }
+
+        .form-input:focus,
+        input[type="text"]:focus, 
+        input[type="email"]:focus, 
+        input[type="password"]:focus,
+        input[type="date"]:focus,
+        input[type="time"]:focus,
+        textarea:focus,
+        select:focus {
+            border-color: #4763E4;
+            outline: none;
+            background-color: #fff;
+        }
+
+        .form-actions {
+            padding: 15px 20px 20px;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        .cancel-btn, .submit-btn {
+            padding: 10px 20px;
+            border-radius: 4px;
+            font-weight: 500;
+            cursor: pointer;
+            border: none;
+            transition: background-color 0.2s;
+            font-size: 14px;
+        }
+
+        .cancel-btn {
+            background-color: #f1f2f6;
+            color: #444;
+        }
+
+        .cancel-btn:hover {
+            background-color: #e4e6eb;
+        }
+
+        .submit-btn {
+            background-color: #4763E4;
+            color: white;
+        }
+
+        .submit-btn:hover {
+            background-color: #3854d1;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 18px;
+            color: #666;
+            padding: 0;
+        }
+
+        .close-btn:hover {
+            color: #333;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateY(-20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        /* Cursor de ponteiro para o perfil de usuário que agora é clicável */
+        .user-profile {
+            cursor: pointer;
+        }
+
+        /* Estilos para rótulos e campos específicos */
+        label.required {
+            font-weight: 500;
+            font-size: 14px;
+        }
+        
+        input[type="text"], 
+        input[type="email"], 
+        input[type="password"], 
+        input[type="date"],
+        input[type="time"],
+        textarea,
+        select {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            font-size: 14px;
+            padding: 10px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background-color: #f9f9f9;
+            width: 100%;
+            box-sizing: border-box;
+            transition: border-color 0.2s;
+        }
+        
+        input[type="text"]:focus, 
+        input[type="email"]:focus, 
+        input[type="password"]:focus,
+        input[type="date"]:focus,
+        input[type="time"]:focus,
+        textarea:focus,
+        select:focus {
+            border-color: #4763E4;
+            outline: none;
+            background-color: #fff;
+        }
+        
+        button {
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+        }
+
+        /* Corrigir espaçamento inconsistente */
+        .form-group:last-of-type {
+            margin-bottom: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .modal-content {
+                max-width: 90%;
+                margin: 0 auto;
+            }
+            
+            .form-actions {
+                flex-direction: column-reverse;
+                gap: 10px;
+            }
+            
+            .submit-btn, .cancel-btn {
+                width: 100%;
+                padding: 12px;
+            }
+        }
+
+        /* Estilos consistentes para todos os inputs e botões */
+        button, input, textarea, select {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            font-size: 14px;
+        }
+
+        /* Remover estilos padrão dos navegadores para inputs */
+        input, textarea, select, button {
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        input[type="date"]::-webkit-calendar-picker-indicator {
+            opacity: 0.7;
+            cursor: pointer;
+        }
+
+        input[type="time"]::-webkit-calendar-picker-indicator {
+            opacity: 0.7;
+            cursor: pointer;
+        }
+        
+        /* Sobrescrever qualquer estilo inline inconsistente */
+        .form-input, 
+        .modal input[type="text"], 
+        .modal input[type="email"], 
+        .modal input[type="password"], 
+        .modal input[type="date"],
+        .modal input[type="time"],
+        .modal textarea,
+        .modal select {
+            width: 100% !important;
+            padding: 10px 12px !important;
+            font-size: 14px !important;
+            border: 1px solid #ddd !important;
+            border-radius: 4px !important;
+            background-color: #f9f9f9 !important;
+            transition: border-color 0.2s !important;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
+            box-sizing: border-box !important;
+        }
+    </style>
+    {% block styles %}{% endblock %}
+</head>
+<body>
+    <div class="app-container">
+        <!-- Barra lateral -->
+        <div class="sidebar">
+            <!-- Elementos decorativos -->
+            <div class="circle-decoration circle-1"></div>
+            <div class="circle-decoration circle-2"></div>
+            <div class="circle-decoration circle-3"></div>
+            <div class="dot-pattern"></div>
+            
+            <!-- Logo -->
+            <div class="header-logo">
+                <img src="{{ url_for('static', filename='images/calendario.png') }}" alt="Calendário" class="logo-image">
+                <div class="logo-text">AGENDA FAMILIAR</div>
+            </div>
+            
+            <!-- Lista de famílias do usuário -->
+            <div class="families-list">
+                <div class="families-header">Meus Calendários</div>
+                {% if current_user.families.all() %}
+                    <div class="calendar-dropdown">
+                        <div class="calendar-dropdown-header" onclick="toggleCalendarDropdown()">
+                            <div style="display: flex; align-items: center;">
+                                <i class="fas fa-users family-icon"></i>
+                                <div class="family-name">
+                                    {% if current_user.active_family %}
+                                        {{ current_user.active_family.name }}
+                                    {% else %}
+                                        Selecione um calendário
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <i class="fas fa-chevron-down"></i>
+                        </div>
+                        <div id="calendarDropdownContent" class="calendar-dropdown-content">
+                            {% for family in current_user.families.all() %}
+                                <a href="{{ url_for('main.select_family', family_id=family.id) }}" class="dropdown-item {% if current_user.active_family_id == family.id %}active{% endif %}">
+                                    <i class="fas fa-users family-icon"></i>
+                                    <div class="family-name">{{ family.name }}</div>
+                                </a>
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% else %}
+                    <div class="family-item">
+                        <i class="fas fa-exclamation-circle family-icon"></i>
+                        <div class="family-name">Nenhum calendário</div>
+                    </div>
+                {% endif %}
+            </div>
+            
+            <!-- Botão de gerenciar grupos -->
+            <a href="{{ url_for('main.family_options') }}" class="new-calendar-btn">
+                <i class="fas fa-users"></i> Gerenciar Grupos
+            </a>
+            
+            <!-- Menu de navegação -->
+            {% if current_user.active_family_id %}
+                <nav class="nav-menu">
+                    <a href="{{ url_for('main.dashboard') }}" class="nav-item {% if request.endpoint == 'main.dashboard' %}active{% endif %}">
+                        <i class="fas fa-th-large"></i> Dashboard
+                    </a>
+                    <a href="{{ url_for('main.calendar') }}" class="nav-item {% if request.endpoint == 'main.calendar' %}active{% endif %}">
+                        <i class="far fa-calendar-alt"></i> Calendário
+                    </a>
+                    <a href="{{ url_for('main.events') }}" class="nav-item {% if request.endpoint == 'main.events' or request.endpoint == 'main.new_event' or request.endpoint == 'main.edit_event' %}active{% endif %}">
+                        <i class="fas fa-calendar-plus"></i> Eventos
+                    </a>
+                    <a href="{{ url_for('main.tasks') }}" class="nav-item {% if request.endpoint == 'main.tasks' %}active{% endif %}">
+                        <i class="fas fa-tasks"></i> Tarefas
+                    </a>
+                    <a href="{{ url_for('main.family_members') }}" class="nav-item {% if request.endpoint == 'main.family_members' %}active{% endif %}">
+                        <i class="fas fa-users"></i> Participantes
+                    </a>
+                    {% if current_user.active_family and current_user in current_user.active_family.admins %}
+                        <a href="{{ url_for('main.settings') }}" class="nav-item {% if request.endpoint == 'main.settings' %}active{% endif %}">
+                            <i class="fas fa-cog"></i> Configurações
+                        </a>
+                    {% endif %}
+                </nav>
+            {% endif %}
+            
+            <!-- Perfil de usuário -->
+            <div class="user-profile" onclick="openEditProfileModal()">
+                <div class="avatar">
+                    {{ current_user.username|first|upper }}
+                </div>
+                <span>{{ current_user.username }}</span>
+                <a href="{{ url_for('main.logout') }}" style="margin-left: auto;" onclick="event.stopPropagation();">
+                    <i class="fas fa-sign-out-alt"></i>
+                </a>
+            </div>
+        </div>
+        
+        <!-- Conteúdo principal -->
+        <div class="main-content">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    <div class="messages">
+                        {% for category, message in messages %}
+                            <div class="message alert-message {% if category != '_' %}message-{{ category }}{% endif %}">
+                                <i class="fas {% if category == 'success' %}fa-check-circle{% elif category == 'error' %}fa-exclamation-circle{% elif category == 'warning' %}fa-exclamation-triangle{% else %}fa-info-circle{% endif %}"></i>
+                                {{ message }}
+                                <button class="close-btn"><i class="fas fa-times"></i></button>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            {% endwith %}
+            
+            {% block content %}{% endblock %}
+        </div>
+    </div>
+
+    <!-- Modal de Edição de Perfil -->
+    <div id="editProfileModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Editar Perfil</h2>
+                <button class="close-btn" onclick="closeEditProfileModal()" style="position: absolute; top: 16px; right: 15px;">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <!-- Avatar e informações -->
+            <div style="display: flex; flex-direction: column; align-items: center; padding: 16px 0 10px;">
+                <div style="width: 70px; height: 70px; background-color: #4763E4; color: white; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 1.8rem; margin-bottom: 8px;">
+                    {{ current_user.username|first|upper }}
+                </div>
+                <div style="color: #666; font-size: 14px; margin-bottom: 5px;">{{ current_user.email }}</div>
+            </div>
+            
+            <form method="POST" action="{{ url_for('main.update_profile') }}" class="form" id="editProfileForm" onsubmit="return confirmProfileUpdate()">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="form-group">
+                    <label class="required">Nome de Usuário</label>
+                    <input type="text" class="form-input" id="username" name="username" value="{{ current_user.username }}" required>
+                </div>
+                <div class="form-group">
+                    <label class="required">Email</label>
+                    <input type="email" class="form-input" id="email" name="email" value="{{ current_user.email }}" required>
+                    <div id="emailError" class="error-message" style="color: #e74c3c; font-size: 14px; margin-top: 8px; background-color: rgba(231, 76, 60, 0.1); padding: 8px; border-radius: 4px; border-left: 3px solid #e74c3c; display: none;">
+                        <i class="fas fa-exclamation-circle" style="margin-right: 5px;"></i>Este email já está sendo usado por outro usuário.
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="cancel-btn" onclick="closeEditProfileModal()">Cancelar</button>
+                    <button type="submit" class="submit-btn">Salvar Alterações</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal de Confirmação -->
+    <div id="confirmModal" class="modal" style="z-index: 1100;">
+        <div class="modal-content" style="max-width: 400px;">
+            <div class="modal-header">
+                <h2>Confirmação</h2>
+                <button class="close-btn" onclick="document.getElementById('confirmModal').style.display = 'none'" style="position: absolute; top: 16px; right: 15px;">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div style="padding: 20px; text-align: center;">
+                <p style="margin-bottom: 20px; font-size: 14px;">Confirmar alteração dos dados do usuário?</p>
+                <div style="display: flex; width: 100%; gap: 10px; justify-content: center;">
+                    <button id="confirmCancelBtn" class="cancel-btn">Cancelar</button>
+                    <button id="confirmOkBtn" class="submit-btn">OK</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Funções para o modal de edição de perfil
+        function openEditProfileModal() {
+            document.getElementById('editProfileModal').style.display = 'flex';
+            
+            // Verificar se há mensagens de erro para mostrar
+            checkEmailErrorInMessages();
+        }
+
+        function checkEmailErrorInMessages() {
+            // Procurar por mensagens de erro relacionadas ao email
+            const messages = document.querySelectorAll('.alert-message');
+            let emailErrorFound = false;
+            
+            messages.forEach(message => {
+                const messageText = message.textContent.toLowerCase().trim();
+                if (messageText.includes('email já está em uso') || messageText.includes('email já está sendo usado')) {
+                    document.getElementById('emailError').style.display = 'block';
+                    emailErrorFound = true;
+                    
+                    // Esconder a mensagem flash original
+                    message.style.display = 'none';
+                }
+            });
+            
+            return emailErrorFound;
+        }
+
+        function closeEditProfileModal() {
+            document.getElementById('editProfileModal').style.display = 'none';
+        }
+
+        // Função para o dropdown de calendários
+        function toggleCalendarDropdown() {
+            document.getElementById('calendarDropdownContent').classList.toggle('show');
+        }
+
+        // Fechar dropdown ao clicar fora dele
+        window.addEventListener('click', function(event) {
+            if (!event.target.closest('.calendar-dropdown-header')) {
+                var dropdowns = document.getElementsByClassName('calendar-dropdown-content');
+                for (var i = 0; i < dropdowns.length; i++) {
+                    var openDropdown = dropdowns[i];
+                    if (openDropdown.classList.contains('show')) {
+                        openDropdown.classList.remove('show');
+                    }
+                }
+            }
+        });
+
+        // Confirmação antes de salvar alterações de perfil
+        function confirmProfileUpdate() {
+            document.getElementById('confirmModal').style.display = 'flex';
+            return false; // Impede o envio do formulário até a confirmação
+        }
+
+        // Configurar os botões do modal de confirmação
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('confirmOkBtn').addEventListener('click', function() {
+                document.getElementById('confirmModal').style.display = 'none';
+                document.getElementById('editProfileForm').submit();
+            });
+            
+            document.getElementById('confirmCancelBtn').addEventListener('click', function() {
+                document.getElementById('confirmModal').style.display = 'none';
+            });
+            
+            // Impedir o fechamento do modal de confirmação ao clicar fora dele
+            document.getElementById('confirmModal').addEventListener('click', function(event) {
+                if (event.target === this) {
+                    event.stopPropagation();
+                }
+            });
+        });
+        
+        // Fechar modal ao clicar fora dele
+        window.onclick = function(event) {
+            var modal = document.getElementById('editProfileModal');
+            if (event.target == modal) {
+                closeEditProfileModal();
+            }
+        };
+        
+        // Adicionar classe de animação durante a navegação
+        document.querySelectorAll('.nav-item').forEach(item => {
+            item.addEventListener('click', function() {
+                this.classList.add('active');
+            });
+        });
+
+        // Verificar mensagens flash e mostrar mensagem de erro de email
+        document.addEventListener('DOMContentLoaded', function() {
+            const messages = document.querySelectorAll('.alert-message');
+            
+            // Verificar se há mensagem de erro sobre email já em uso
+            let hasEmailError = false;
+            messages.forEach(message => {
+                const messageText = message.textContent.toLowerCase();
+                if (messageText.includes('email já está em uso') || messageText.includes('email já está sendo usado')) {
+                    hasEmailError = true;
+                }
+            });
+            
+            // Se encontrou erro de email, abre o modal e mostra o erro
+            if (hasEmailError) {
+                openEditProfileModal();
+                document.getElementById('emailError').style.display = 'block';
+            }
+
+            // Adicionar evento de clique no botão fechar
+            messages.forEach(message => {
+                // Determinar o tipo de mensagem com base em palavras-chave
+                const messageText = message.textContent.toLowerCase();
+                if (messageText.includes('sucesso')) {
+                    message.classList.add('message-success');
+                    message.querySelector('i').className = 'fas fa-check-circle';
+                } else if (messageText.includes('erro') || messageText.includes('falhou')) {
+                    message.classList.add('message-error');
+                    message.querySelector('i').className = 'fas fa-exclamation-circle';
+                } else if (messageText.includes('aviso')) {
+                    message.classList.add('message-warning');
+                    message.querySelector('i').className = 'fas fa-exclamation-triangle';
+                }
+                
+                const closeBtn = message.querySelector('.close-btn');
+                if (closeBtn) {
+                    closeBtn.addEventListener('click', function() {
+                        message.classList.add('message-hide');
+                        setTimeout(() => {
+                            message.remove();
+                        }, 300);
+                    });
+                }
+                
+                // Fechar automaticamente após 5 segundos
+                setTimeout(() => {
+                    message.classList.add('message-hide');
+                    setTimeout(() => {
+                        message.remove();
+                    }, 300);
+                }, 5000);
+            });
+        });
+    </script>
+</body>
+</html> 

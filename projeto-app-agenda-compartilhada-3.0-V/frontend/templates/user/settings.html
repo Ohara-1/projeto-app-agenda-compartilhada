@@ -1,0 +1,380 @@
+{% extends "layout/app_layout.html" %}
+{% block title %}Configurações do Grupo{% endblock %}
+
+{% block styles %}
+<style>
+    .settings-container {
+        background-color: white;
+        border-radius: 15px;
+        box-shadow: 0 5px 25px rgba(0, 0, 0, 0.05);
+        padding: 30px;
+        margin-bottom: 25px;
+    }
+    
+    .settings-title {
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: #333;
+        margin-bottom: 25px;
+    }
+    
+    .settings-section {
+        margin-bottom: 30px;
+    }
+    
+    .section-title {
+        font-size: 1.3rem;
+        font-weight: 600;
+        color: #444;
+        margin-bottom: 15px;
+    }
+    
+    .section-description {
+        color: #666;
+        margin-bottom: 20px;
+        font-size: 0.95rem;
+    }
+    
+    .divider {
+        height: 1px;
+        background-color: #eee;
+        margin: 30px 0;
+    }
+    
+    .form-group {
+        margin-bottom: 20px;
+    }
+    
+    .form-label {
+        display: block;
+        font-weight: 500;
+        margin-bottom: 8px;
+        color: #444;
+    }
+    
+    .form-input {
+        width: 100%;
+        padding: 12px 15px;
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        font-size: 1rem;
+        color: #444;
+        font-family: 'Poppins', sans-serif;
+        transition: all 0.3s ease;
+    }
+    
+    .form-input:focus {
+        border-color: #4361ee;
+        box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.15);
+        outline: none;
+    }
+    
+    .form-switch {
+        display: flex;
+        align-items: center;
+        cursor: pointer;
+        user-select: none;
+    }
+    
+    .switch-checkbox {
+        position: absolute;
+        opacity: 0;
+        cursor: pointer;
+        height: 0;
+        width: 0;
+    }
+    
+    .switch-toggle {
+        position: relative;
+        display: inline-block;
+        width: 50px;
+        height: 26px;
+        background-color: #e0e0e0;
+        border-radius: 34px;
+        margin-right: 10px;
+        transition: all 0.3s ease;
+    }
+    
+    .switch-toggle:before {
+        position: absolute;
+        content: "";
+        height: 20px;
+        width: 20px;
+        left: 3px;
+        bottom: 3px;
+        background-color: white;
+        border-radius: 50%;
+        transition: all 0.3s ease;
+    }
+    
+    .switch-checkbox:checked + .switch-toggle {
+        background-color: #4361ee;
+    }
+    
+    .switch-checkbox:checked + .switch-toggle:before {
+        transform: translateX(24px);
+    }
+    
+    .btn-save {
+        background-color: #4361ee;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        padding: 14px 25px;
+        font-weight: 600;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-save:hover {
+        background-color: #3652d9;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(67, 97, 238, 0.4);
+    }
+    
+    .btn-warning {
+        background-color: #e74c3c;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        padding: 14px 25px;
+        font-weight: 600;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-warning:hover {
+        background-color: #c0392b;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(231, 76, 60, 0.4);
+    }
+    
+    .action-description {
+        margin-bottom: 15px;
+        color: #666;
+    }
+    
+    .confirm-modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        z-index: 1000;
+        justify-content: center;
+        align-items: center;
+    }
+    
+    .modal-content {
+        background-color: white;
+        padding: 25px;
+        border-radius: 10px;
+        width: 90%;
+        max-width: 500px;
+        text-align: center;
+    }
+    
+    .modal-header {
+        margin-bottom: 15px;
+    }
+    
+    .modal-title {
+        font-size: 1.3rem;
+        font-weight: 600;
+        color: #333;
+    }
+    
+    .modal-body {
+        margin-bottom: 20px;
+    }
+    
+    .modal-actions {
+        display: flex;
+        justify-content: center;
+        gap: 15px;
+    }
+    
+    .btn-modal {
+        padding: 10px 20px;
+        border-radius: 6px;
+        font-weight: 500;
+        cursor: pointer;
+        border: none;
+    }
+    
+    .btn-confirm {
+        background-color: #e74c3c;
+        color: white;
+    }
+    
+    .btn-cancel {
+        background-color: #f1f1f1;
+        color: #333;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        <div class="messages">
+            {% for category, message in messages %}
+                <div class="message alert-message {% if category != '_' %}message-{{ category }}{% endif %}">
+                    <i class="fas {% if category == 'success' %}fa-check-circle{% elif category == 'error' %}fa-exclamation-circle{% elif category == 'warning' %}fa-exclamation-triangle{% else %}fa-info-circle{% endif %}"></i>
+                    {{ message }}
+                    <button class="close-btn"><i class="fas fa-times"></i></button>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+{% endwith %}
+
+<div class="settings-container">
+    <h1 class="settings-title">Configurações do Grupo</h1>
+    
+    <div class="settings-section">
+        <h2 class="section-title">Informações do Grupo</h2>
+        <p class="section-description">Altere o nome e outras configurações básicas do seu grupo familiar.</p>
+        
+        <form method="POST">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="form-group">
+                <label for="family_name" class="form-label">Nome do Grupo</label>
+                <input type="text" name="family_name" id="family_name" class="form-input" value="{{ current_user.active_family.name }}" placeholder="Digite o nome do grupo" required>
+            </div>
+            
+            <button type="submit" class="btn-save">
+                <i class="fas fa-save"></i> Salvar Alterações
+            </button>
+        </form>
+    </div>
+    
+    <div class="divider"></div>
+    
+    <div class="settings-section">
+        <h2 class="section-title">Preferências de Visualização</h2>
+        <p class="section-description">Configurações de visualização do calendário e eventos.</p>
+        
+        <div class="form-group">
+            <label class="form-label">Notificações</label>
+            <label class="form-switch">
+                <input type="checkbox" class="switch-checkbox" name="email_notifications" id="emailNotifications" checked>
+                <span class="switch-toggle"></span>
+                Receber notificações por email
+            </label>
+        </div>
+    </div>
+    
+    <div class="divider"></div>
+    
+    <div class="settings-section">
+        <h2 class="section-title">Gerenciamento de Calendário</h2>
+        <p class="section-description">Opções para gerenciar sua participação no calendário atual.</p>
+        
+        <div class="action-description">
+            <p>Ao sair deste calendário, você perderá acesso a todos os eventos e tarefas compartilhadas. Esta ação não exclui o calendário para outros membros.</p>
+        </div>
+        
+        <button type="button" id="leaveCalendarBtn" class="btn-warning">
+            <i class="fas fa-sign-out-alt"></i> Sair do Calendário
+        </button>
+        
+        {% if current_user in current_user.active_family.admins %}
+        <div class="divider"></div>
+        <div class="action-description">
+            <p>Como administrador, você pode excluir permanentemente este calendário. Esta ação afetará todos os membros e não pode ser desfeita.</p>
+        </div>
+        
+        <button type="button" id="deleteCalendarBtn" class="btn-warning">
+            <i class="fas fa-trash"></i> Excluir Calendário
+        </button>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Modal de Confirmação para Sair do Calendário -->
+<div id="leaveConfirmModal" class="confirm-modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 class="modal-title">Confirmação</h3>
+        </div>
+        <div class="modal-body">
+            <p>Tem certeza que deseja sair deste calendário?</p>
+            <p>Você perderá acesso a todos os eventos e tarefas compartilhadas.</p>
+        </div>
+        <div class="modal-actions">
+            <form action="{{ url_for('main.leave_family') }}" method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn-modal btn-confirm">Sim, sair</button>
+            </form>
+            <button type="button" class="btn-modal btn-cancel" onclick="hideLeaveModal()">Cancelar</button>
+        </div>
+    </div>
+</div>
+
+{% if current_user in current_user.active_family.admins %}
+<!-- Modal de Confirmação para Excluir Calendário -->
+<div id="deleteConfirmModal" class="confirm-modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 class="modal-title">Confirmação de Exclusão</h3>
+        </div>
+        <div class="modal-body">
+            <p>Tem certeza que deseja <strong>excluir permanentemente</strong> este calendário?</p>
+            <p>Esta ação afetará <strong>todos os membros</strong> e <strong>não pode ser desfeita</strong>.</p>
+        </div>
+        <div class="modal-actions">
+            <form action="{{ url_for('main.delete_family') }}" method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn-modal btn-confirm">Sim, excluir permanentemente</button>
+            </form>
+            <button type="button" class="btn-modal btn-cancel" onclick="hideDeleteModal()">Cancelar</button>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<script>
+    // Modal de confirmação para sair do calendário
+    const leaveModal = document.getElementById('leaveConfirmModal');
+    const leaveCalendarBtn = document.getElementById('leaveCalendarBtn');
+    
+    leaveCalendarBtn.addEventListener('click', function() {
+        leaveModal.style.display = 'flex';
+    });
+    
+    function hideLeaveModal() {
+        leaveModal.style.display = 'none';
+    }
+    
+    {% if current_user in current_user.active_family.admins %}
+    // Modal de confirmação para excluir calendário
+    const deleteModal = document.getElementById('deleteConfirmModal');
+    const deleteCalendarBtn = document.getElementById('deleteCalendarBtn');
+    
+    deleteCalendarBtn.addEventListener('click', function() {
+        deleteModal.style.display = 'flex';
+    });
+    
+    function hideDeleteModal() {
+        deleteModal.style.display = 'none';
+    }
+    {% endif %}
+    
+    // Fechar os modais quando clicar fora deles
+    window.addEventListener('click', function(event) {
+        if (event.target === leaveModal) {
+            hideLeaveModal();
+        }
+        {% if current_user in current_user.active_family.admins %}
+        if (event.target === deleteModal) {
+            hideDeleteModal();
+        }
+        {% endif %}
+    });
+</script>
+{% endblock %} 
