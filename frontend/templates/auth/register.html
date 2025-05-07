@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Criar Conta - Agenda Familiar</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+    <div class="login-container">
+        <!-- Lado esquerdo - Azul com boas-vindas -->
+        <div class="login-left">
+            <div class="circle-decoration circle-1"></div>
+            <div class="circle-decoration circle-2"></div>
+            <div class="circle-decoration circle-3"></div>
+            <div class="wave-decoration"></div>
+            
+            <div class="header-logo">
+                <img src="{{ url_for('static', filename='images/calendario.png') }}" alt="Calendário" class="logo-image">
+                <span class="logo-text">AGENDA FAMILIAR</span>
+            </div>
+            
+            <div class="welcome-content">
+                <h1 class="welcome-title">Crie sua<br>conta</h1>
+                <p class="welcome-description">
+                    Junte-se a nós para organizar todos os eventos importantes da sua família. Crie calendários compartilhados, atribua <span class="highlight">tarefas</span> e mantenha todos <span class="highlight">conectados</span>.
+                </p>
+                <div class="floating" style="position: absolute; bottom: 70px; left: 40px; z-index: 2;">
+                    <img src="{{ url_for('static', filename='images/calendario.png') }}" alt="" style="width: 40px; opacity: 0.15;">
+                </div>
+            </div>
+            
+            <div class="dot-pattern"></div>
+        </div>
+        
+        <!-- Lado direito - Formulário de cadastro -->
+        <div class="login-right">
+            <div class="form-container">
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        <div class="messages">
+                            {% for category, message in messages %}
+                                <div class="message {% if category != '_' %}message-{{ category }}{% endif %}">
+                                    <i class="fas {% if category == 'success' %}fa-check-circle{% elif category == 'error' %}fa-exclamation-circle{% elif category == 'warning' %}fa-exclamation-triangle{% else %}fa-info-circle{% endif %}"></i>
+                                    {{ message }}
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                {% endwith %}
+                
+                <form method="POST" class="register-form">
+                    {{ form.hidden_tag() }}
+                    
+                    <div class="input-group">
+                        <input type="text" name="{{ form.username.name }}" id="{{ form.username.id }}" class="input-field" placeholder="Nome de usuário" value="{{ form.username.data or '' }}">
+                        <i class="input-icon fas fa-user"></i>
+                        {% if form.username.errors %}
+                            <span class="error">{{ form.username.errors[0] }}</span>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="input-group">
+                        <input type="email" name="{{ form.email.name }}" id="{{ form.email.id }}" class="input-field" placeholder="Email" value="{{ form.email.data or '' }}">
+                        <i class="input-icon fas fa-envelope"></i>
+                        {% if form.email.errors %}
+                            <span class="error">{{ form.email.errors[0] }}</span>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="input-group">
+                        <input type="password" name="{{ form.password.name }}" id="{{ form.password.id }}" class="input-field" placeholder="Senha">
+                        <i class="input-icon fas fa-lock"></i>
+                        {% if form.password.errors %}
+                            <span class="error">{{ form.password.errors[0] }}</span>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="input-group">
+                        <input type="password" name="{{ form.confirm_password.name }}" id="{{ form.confirm_password.id }}" class="input-field" placeholder="Confirmar senha">
+                        <i class="input-icon fas fa-lock"></i>
+                        {% if form.confirm_password.errors %}
+                            <span class="error">{{ form.confirm_password.errors[0] }}</span>
+                        {% endif %}
+                    </div>
+                    
+                    <button type="submit" class="register-btn">
+                        <i class="fas fa-user-plus"></i>
+                        Criar Conta
+                    </button>
+                    
+                    <div class="divider">ou</div>
+                    
+                    <a href="{{ url_for('main.login') }}" class="signup-btn">
+                        <i class="fas fa-sign-in-alt"></i>
+                        Voltar para Login
+                    </a>
+                </form>
+            </div>
+        </div>
+    </div>
+</body>
+</html> 
