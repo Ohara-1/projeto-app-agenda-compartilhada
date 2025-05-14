@@ -1,0 +1,60 @@
+{% extends "layout/layout.html" %}
+
+{% block title %}Convidar Membros - Grupo {{ current_user.active_family.name }}{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2>Convidar Membros para {{ current_user.active_family.name }}</h2>
+    
+    <p class="invite-info">
+        Compartilhe o link abaixo com pessoas que você deseja convidar para o seu grupo familiar.
+        Qualquer pessoa com este link poderá se juntar ao seu grupo.
+    </p>
+    
+    <div class="invite-link-container">
+        <input type="text" id="invite-link" class="invite-link" value="{{ invite_link }}" readonly>
+        <button class="btn btn-primary copy-btn" onclick="copyInviteLink()">Copiar Link</button>
+    </div>
+    
+    <div class="mt-5">
+        <h3>Membros Atuais</h3>
+        <div class="list-group">
+            {% for member in current_user.active_family.members %}
+                <div class="list-group-item d-flex justify-content-between align-items-center">
+                    <div>
+                        <strong>{{ member.username }}</strong>
+                        <small>({{ member.email }})</small>
+                    </div>
+                    {% if member.id == current_user.active_family.admin_id %}
+                        <span class="admin-badge">Admin</span>
+                    {% endif %}
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+    
+    <a href="{{ url_for('main.calendar') }}" class="btn btn-secondary">Voltar para o Calendário</a>
+</div>
+{% endblock %}
+
+{% block styles %}
+<style>
+    /* Este estilo permite copiar o link sem usar JavaScript */
+    .invite-link-container {
+        display: flex;
+        margin: 20px 0;
+    }
+    
+    .invite-link {
+        flex: 1;
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-radius: 4px 0 0 4px;
+        font-size: 14px;
+    }
+    
+    .copy-btn {
+        border-radius: 0 4px 4px 0;
+    }
+</style>
+{% endblock %} 

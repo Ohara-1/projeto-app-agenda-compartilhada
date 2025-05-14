@@ -1,0 +1,177 @@
+{% extends "layout/app_layout.html" %}
+{% block title %}Tarefas - Agenda Familiar{% endblock %}
+
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/tasks.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/task-modal.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="tasks-container">
+    <div class="tasks-header">
+        <div class="title-section">
+            <h1>Tarefas</h1>
+            <p class="subtitle">Gerencie as atividades da família</p>
+        </div>
+        <button class="new-task-btn" onclick="openNewTaskModal()">
+            <i class="fas fa-plus"></i>
+            Nova Tarefa
+        </button>
+    </div>
+
+    {% if tasks %}
+    <div class="tasks-grid">
+        {% for task in tasks %}
+        <div class="task-card {% if task.completed %}completed{% endif %}">
+            <div class="task-header">
+                <div class="task-status">
+                    {% if task.completed %}
+                    <i class="fas fa-check-circle"></i>
+                    {% else %}
+                    <i class="far fa-circle"></i>
+                    {% endif %}
+                </div>
+                <div class="task-title">{{ task.title }}</div>
+                <div class="task-actions">
+                    {% if not task.completed %}
+                    <a href="{{ url_for('main.complete_task', task_id=task.id) }}" class="action-btn complete-btn">
+                        <i class="fas fa-check"></i>
+                    </a>
+                    {% endif %}
+                    <a href="{{ url_for('main.delete_task', task_id=task.id) }}" class="action-btn delete-btn">
+                        <i class="fas fa-trash"></i>
+                    </a>
+                </div>
+            </div>
+            {% if task.description %}
+            <div class="task-description">{{ task.description }}</div>
+            {% endif %}
+            <div class="task-footer">
+                <div class="task-meta">
+                    {% if task.due_date %}
+                    <span class="due-date">
+                        <i class="far fa-calendar"></i>
+                        {{ task.due_date.strftime('%d/%m/%Y') }}
+                    </span>
+                    {% endif %}
+                    {% if task.assigned_to %}
+                    <span class="assigned-to">
+                        <i class="far fa-user"></i>
+                        {{ task.assigned_to.username }}
+                    </span>
+                    {% else %}
+                    <span class="assigned-to">
+                        <i class="fas fa-users"></i>
+                        Todos
+                    </span>
+                    {% endif %}
+                </div>
+                <div class="task-creator">
+                    <span class="creator-avatar">{{ task.user.username[0] | upper }}</span>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <div class="empty-icon">
+            <i class="fas fa-tasks"></i>
+        </div>
+        <h2>Não há tarefas</h2>
+        <p>Adicione uma nova tarefa para começar!</p>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Modal de Nova Tarefa -->
+<div id="newTaskModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Nova Tarefa</h2>
+            <button class="close-btn" onclick="closeNewTaskModal()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <form method="POST" class="task-form" id="taskForm">
+            {{ form.hidden_tag() }}
+            <div class="form-group">
+                {{ form.title.label(class="required") }}
+                {{ form.title(class="form-input", placeholder="Digite o título da tarefa", required=true) }}
+                {% if form.title.errors %}
+                    {% for error in form.title.errors %}
+                        <span class="error-message">{{ error }}</span>
+                    {% endfor %}
+                {% endif %}
+            </div>
+            <div class="form-group">
+                {{ form.description.label() }}
+                {{ form.description(class="form-input", placeholder="Descreva a tarefa (opcional)") }}
+            </div>
+            <div class="form-group">
+                {{ form.due_date.label(class="required") }}
+                {{ form.due_date(class="form-input", type="date", required=true) }}
+                {% if form.due_date.errors %}
+                    {% for error in form.due_date.errors %}
+                        <span class="error-message">{{ error }}</span>
+                    {% endfor %}
+                {% endif %}
+            </div>
+            <div class="form-group">
+                {{ form.assigned_to_id.label(class="required") }}
+                <div class="select-assignee">
+                    {{ form.assigned_to_id(class="form-input", required=true) }}
+                </div>
+                {% if form.assigned_to_id.errors %}
+                    {% for error in form.assigned_to_id.errors %}
+                        <span class="error-message">{{ error }}</span>
+                    {% endfor %}
+                {% endif %}
+            </div>
+            <div class="form-actions">
+                <button type="button" class="cancel-btn" onclick="closeNewTaskModal()">Cancelar</button>
+                {{ form.submit(class="submit-btn") }}
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function openNewTaskModal() {
+    document.getElementById('newTaskModal').style.display = 'flex';
+}
+
+function closeNewTaskModal() {
+    document.getElementById('newTaskModal').style.display = 'none';
+    document.getElementById('taskForm').reset();
+}
+
+// Fechar modal ao clicar fora dele
+window.onclick = function(event) {
+    var modal = document.getElementById('newTaskModal');
+    if (event.target == modal) {
+        closeNewTaskModal();
+    }
+};
+
+// Validação do formulário
+document.getElementById('taskForm').addEventListener('submit', function(e) {
+    var title = document.getElementById('title').value;
+    var dueDate = document.getElementById('due_date').value;
+    
+    if (!title || !dueDate) {
+        e.preventDefault();
+        alert('Por favor, preencha todos os campos obrigatórios.');
+    }
+});
+
+// Abrir o modal de nova tarefa automaticamente quando a página for carregada
+document.addEventListener('DOMContentLoaded', function() {
+    // Verificar se veio de um clique no menu lateral (usando um parâmetro na URL)
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('new') === 'true') {
+        openNewTaskModal();
+    }
+});
+</script>
+{% endblock %} 
