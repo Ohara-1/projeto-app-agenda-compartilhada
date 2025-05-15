@@ -1,0 +1,357 @@
+{% extends "layout/app_layout.html" %}
+
+{% block title %}Membros - Agenda Familiar{% endblock %}
+
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/family_members.css') }}">
+<style>
+    .member-card {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        padding: 20px;
+        margin-bottom: 15px;
+        transition: all 0.3s ease;
+    }
+    
+    .member-card:hover {
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+        transform: translateY(-2px);
+    }
+    
+    .member-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 12px;
+    }
+    
+    .member-avatar {
+        width: 50px;
+        height: 50px;
+        font-size: 22px;
+        box-shadow: 0 2px 10px rgba(71, 99, 228, 0.2);
+    }
+    
+    .member-details {
+        flex: 1;
+        padding: 5px 0;
+    }
+    
+    .member-name {
+        font-size: 18px;
+        margin-bottom: 6px;
+    }
+    
+    .member-actions-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 15px;
+    }
+    
+    .role-switch {
+        position: relative;
+        display: inline-block;
+        width: 180px;
+        height: 34px;
+    }
+    
+    .role-switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+    
+    .switch-slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: #f5f7ff;
+        transition: .4s;
+        border-radius: 34px;
+        border: 1px solid #e0e4f4;
+    }
+    
+    .switch-slider:before {
+        position: absolute;
+        content: "Membro";
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+        font-weight: 500;
+        left: 4px;
+        bottom: 4px;
+        width: 90px;
+        height: 24px;
+        background-color: white;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        transition: .4s;
+        border-radius: 20px;
+        color: #4763E4;
+    }
+    
+    input:checked + .switch-slider {
+        background-color: #e8f5e9;
+    }
+    
+    input:checked + .switch-slider:before {
+        transform: translateX(80px);
+        content: "Admin";
+        color: #2e7d32;
+    }
+    
+    .remove-actions {
+        text-align: right;
+    }
+    
+    .members-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 20px;
+    }
+    
+    .invite-section {
+        background: white;
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 30px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    
+    .invite-title {
+        font-size: 18px;
+        font-weight: 500;
+        color: #444;
+        margin-bottom: 15px;
+    }
+    
+    .invite-description {
+        color: #666;
+        margin-bottom: 15px;
+        font-size: 0.95rem;
+    }
+    
+    .invite-link {
+        flex: 1;
+        padding: 12px;
+        background: #f5f7ff;
+        border: 1px solid #e0e4f4;
+        border-radius: 8px;
+        color: #4763E4;
+        font-size: 14px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    
+    .copy-btn {
+        padding: 8px 16px;
+        background: #4763E4;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    
+    .copy-btn:hover {
+        background: #3651c7;
+    }
+    
+    .empty-state {
+        background: rgba(0, 0, 0, 0.02);
+        border-radius: 12px;
+        padding: 40px;
+        text-align: center;
+        color: #666;
+    }
+    
+    .avatar-you {
+        background: #5f65d4 !important;
+        box-shadow: 0 2px 12px rgba(95, 101, 212, 0.35) !important;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="members-container">
+    <div class="members-header">
+        <h1 class="members-title">Membros da Família</h1>
+    </div>
+
+    {% if current_user in current_user.active_family.admins %}
+    <div class="invite-section">
+        <h2 class="invite-title">Link de Convite</h2>
+        <p class="invite-description">Compartilhe este link com os membros da família para que eles possam se juntar ao grupo.</p>
+        
+        <div class="invite-link-container">
+            <input type="text" class="invite-link" id="inviteLink" value="{{ invite_link }}" readonly>
+            <button class="copy-btn" onclick="copyInviteLink()">
+                <i class="fas fa-copy"></i> Copiar
+            </button>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if members|length > 0 %}
+    <div class="members-grid">
+        {% for member in members %}
+        <div class="member-card">
+            <div class="member-header">
+                <div class="member-avatar {% if member == current_user %}avatar-you{% endif %}" title="{% if member == current_user %}Você{% endif %}">
+                    {{ member.username|first|upper }}
+                </div>
+                <div class="member-details">
+                    <div class="member-name">{{ member.username }}</div>
+                    <div class="member-email">{{ member.email }}</div>
+                </div>
+            </div>
+            
+            <div class="member-actions-row">
+                {% if current_user in current_user.active_family.admins and member != current_user %}
+                <div class="role-controls">
+                    <label class="role-switch">
+                        <input type="checkbox" {% if member in current_user.active_family.admins %}checked{% endif %}
+                               onchange="toggleAdminRole(this, {{ member.id }}, '{{ member.username }}')">
+                        <span class="switch-slider"></span>
+                    </label>
+                </div>
+                
+                <div class="remove-actions">
+                    <button class="action-btn remove-btn" onclick="showRemoveConfirmation('{{ member.username }}', {{ member.id }})">
+                        <i class="fas fa-user-minus"></i> Remover
+                    </button>
+                </div>
+                {% else %}
+                <span class="member-role {% if member in current_user.active_family.admins %}role-admin{% else %}role-member{% endif %}">
+                    {% if member in current_user.active_family.admins %}
+                        Administrador
+                    {% else %}
+                        Membro
+                    {% endif %}
+                </span>
+                
+                {% if member == current_user %}
+                <span class="member-role role-you">Você</span>
+                {% endif %}
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <i class="fas fa-users fa-3x" style="margin-bottom: 15px; opacity: 0.2;"></i>
+        <p>Nenhum membro encontrado neste grupo familiar.</p>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Modal de Confirmação para Remover Membro -->
+<div id="confirmationModal" class="confirmation-modal">
+    <div class="modal-content">
+        <h3 class="modal-title">Remover Membro</h3>
+        <p class="modal-message">Tem certeza que deseja remover <span id="memberName"></span> do grupo familiar?</p>
+        <div class="modal-actions">
+            <button class="modal-btn cancel-btn" onclick="hideConfirmationModal()">Cancelar</button>
+            <a href="#" id="confirmRemove" class="modal-btn confirm-btn">Confirmar</a>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Confirmação para Trocar Papel -->
+<div id="roleConfirmModal" class="confirmation-modal">
+    <div class="modal-content">
+        <h3 class="modal-title" id="roleChangeTitle">Alterar Função</h3>
+        <p class="modal-message" id="roleChangeMessage"></p>
+        <div class="modal-actions">
+            <button class="modal-btn cancel-btn" onclick="hideRoleConfirmModal()">Cancelar</button>
+            <a href="#" id="confirmRoleChange" class="modal-btn confirm-btn">Confirmar</a>
+        </div>
+    </div>
+</div>
+
+<script>
+function copyInviteLink() {
+    var copyText = document.getElementById("inviteLink");
+    copyText.select();
+    copyText.setSelectionRange(0, 99999);
+    document.execCommand("copy");
+    
+    var copyBtn = document.querySelector('.copy-btn');
+    var originalText = copyBtn.innerHTML;
+    copyBtn.innerHTML = '<i class="fas fa-check"></i> Copiado!';
+    setTimeout(function() {
+        copyBtn.innerHTML = originalText;
+    }, 2000);
+}
+
+function showRemoveConfirmation(username, userId) {
+    var modal = document.getElementById('confirmationModal');
+    var memberNameSpan = document.getElementById('memberName');
+    var confirmButton = document.getElementById('confirmRemove');
+    
+    memberNameSpan.textContent = username;
+    confirmButton.href = '/family/remove_member/' + userId;
+    modal.style.display = 'flex';
+}
+
+function hideConfirmationModal() {
+    document.getElementById('confirmationModal').style.display = 'none';
+}
+
+function toggleAdminRole(checkbox, userId, username) {
+    var modal = document.getElementById('roleConfirmModal');
+    var titleEl = document.getElementById('roleChangeTitle');
+    var messageEl = document.getElementById('roleChangeMessage');
+    var confirmButton = document.getElementById('confirmRoleChange');
+    
+    // Reverte o estado do checkbox para que o usuário possa confirmar a mudança
+    checkbox.checked = !checkbox.checked;
+    
+    if (checkbox.checked) {
+        // Vai remover admin
+        titleEl.textContent = 'Remover Privilégios de Admin';
+        messageEl.textContent = `Tem certeza que deseja remover os privilégios de administrador de ${username}?`;
+        confirmButton.href = '/family/remove_admin/' + userId;
+    } else {
+        // Vai adicionar admin
+        titleEl.textContent = 'Conceder Privilégios de Admin';
+        messageEl.textContent = `Tem certeza que deseja tornar ${username} um administrador do grupo?`;
+        confirmButton.href = '/family/make_admin/' + userId;
+    }
+    
+    // Armazena o checkbox para ser atualizado após confirmação
+    confirmButton.setAttribute('data-checkbox', checkbox.id);
+    modal.style.display = 'flex';
+}
+
+function hideRoleConfirmModal() {
+    document.getElementById('roleConfirmModal').style.display = 'none';
+}
+
+document.getElementById('confirmRoleChange').addEventListener('click', function(e) {
+    var checkboxId = this.getAttribute('data-checkbox');
+    var checkbox = document.getElementById(checkboxId);
+    if (checkbox) {
+        checkbox.checked = !checkbox.checked;
+    }
+});
+
+// Fechar modal ao clicar fora dele
+window.onclick = function(event) {
+    var modal = document.getElementById('confirmationModal');
+    var roleModal = document.getElementById('roleConfirmModal');
+    if (event.target == modal) {
+        hideConfirmationModal();
+    }
+    if (event.target == roleModal) {
+        hideRoleConfirmModal();
+    }
+}
+</script>
+{% endblock %} 

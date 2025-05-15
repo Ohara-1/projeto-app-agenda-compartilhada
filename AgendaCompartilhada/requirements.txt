@@ -1,0 +1,18 @@
+# Framework principal
+Flask==2.2.3
+Werkzeug==2.2.3
+
+# Extensões Flask
+Flask-Login==0.6.2
+Flask-SQLAlchemy==3.0.3
+Flask-WTF==1.1.1
+Flask-SocketIO==5.3.4
+
+# Banco de dados
+SQLAlchemy==2.0.8
+
+# Utilitários
+python-dotenv==1.0.0
+email-validator==2.0.0
+itsdangerous==2.1.2
+Jinja2==3.1.2 
